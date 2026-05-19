@@ -1,5 +1,6 @@
 import React from 'react'
 import '../global.css'
+import LogoWellBeIn from '../assets/logo-wellbe-in.PNG'
 import { Link } from 'react-router-dom'
 
 
@@ -10,11 +11,10 @@ const Footer = () => {
         <div className="footer__grid">
           <div>
             <div className="nav__logo" style={{marginBottom: '1rem'}}>
-              <span className="nav__logo-mark"></span>
-              HealthTrack<span>AI</span>
+              <img src={LogoWellBeIn} className='logo-Wellbe-in'/>
             </div>
             <p className='saude'>
-              Saúde inteligente e conectada. Um projeto acadêmico desenvolvido para o Challenge FIAP 2025-26 em parceria com a THM Estatística.
+              Projeto acadêmico desenvolvido para o Challenge FIAP 2026 em parceria com a THM Estatística.
             </p>
           </div>
           <div>
@@ -32,12 +32,12 @@ const Footer = () => {
             <ul>
               <li>FIAP — Engenharia de Software</li>
               <li>THM Estatística</li>
-              <li>Challenge 2025-26</li>
+              <li>Challenge 2026</li>
             </ul>
           </div>
         </div>
         <div className="footer__bottom">
-          <span>© <span data-year>2026</span> HealthTrack AI · Projeto acadêmico</span>
+          <span>© <span data-year>2026</span> Wellbe-in · Projeto acadêmico</span>
           <span>Build 0.1.0 · Static deploy</span>
         </div>
       </div>
