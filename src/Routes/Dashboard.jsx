@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import "./dashboard.css";
 
 const Dashboard = () => {
@@ -18,6 +18,7 @@ const Dashboard = () => {
 
   const $ = (sel) => document.querySelector(sel);
 
+  // Carrega histórico de análises do sessionStorage ou gera dados fake iniciais
   function loadHistory() {
     try {
       const raw = sessionStorage.getItem(STORE_KEY);
@@ -48,6 +49,7 @@ const Dashboard = () => {
     return seed;
   }
 
+  // Adiciona a análise de hoje ao histórico mantendo últimos 7 dias
   function pushHistory(score, d) {
     const hist = loadHistory();
     const today = "Hoje";
@@ -72,7 +74,7 @@ const Dashboard = () => {
     return trimmed;
   }
 
-  // Scoring and helpers (ported)
+  // Calcula pontuação total (0-100) baseado em 6 dimensões de saúde digital
   function scoreBalance(d) {
     let pTela;
     if (d.horasTela <= 4) pTela = 25;
@@ -124,6 +126,7 @@ const Dashboard = () => {
     };
   }
 
+  // Classifica score em 4 faixas de risco (equilibrada, atenção, moderado, alto)
   function band(score) {
     if (score >= 80) return "equilibrada";
     if (score >= 60) return "atencao";
@@ -150,7 +153,7 @@ const Dashboard = () => {
     },
   };
 
-  // DOM-updating helpers (imperative, quick port)
+  // Atualiza o gauge circular visual com animação de preenchimento
   function updateGauge(balance) {
     const circle = document.getElementById("gaugeFill");
     if (!circle) return;
@@ -163,6 +166,7 @@ const Dashboard = () => {
     if (num) num.textContent = balance;
   }
 
+  // Atualiza um card de métrica (valor, barra de progresso, caption, estado visual)
   function setMetric(id, value, unit, state, barPct, caption) {
     const card = document.getElementById(id);
     if (!card) return;
@@ -177,6 +181,7 @@ const Dashboard = () => {
     if (cap) cap.textContent = caption;
   }
 
+  // Atualiza os 4 cards de métricas principais (tela, pausas, sono, sobrecarga)
   function updateMetrics(d, parts, maxParts) {
     setMetric(
       "metricTela",
@@ -275,7 +280,7 @@ const Dashboard = () => {
       esgotado: "Recuperação urgente",
     })[s] || "";
 
-  // Insights/rendering (kept imperative for speed)
+  // Renderiza lista de alertas e insights no HTML
   function renderAlerts(list) {
     const container = document.getElementById("alertList");
     const count = document.getElementById("alertCount");
@@ -315,6 +320,7 @@ const Dashboard = () => {
     }
   }
 
+  // Gera até 4 recomendações personalizadas baseadas no padrão diário
   function generateRecommendations(d, parts) {
     const recs = [];
     if (parts.pTela <= 10)
@@ -350,7 +356,7 @@ const Dashboard = () => {
       .join("");
   }
 
-  // Charts (uses global Chart if present) — adjusted to use --vital/--accent-purple
+  // Cria gráficos de linha (tendência) e radar (análise de componentes)
   let trendChart = null;
   let breakdownChart = null;
   function buildCharts(history, parts, maxParts) {
@@ -521,6 +527,7 @@ const Dashboard = () => {
   };
   const sobrecargaScale = { tranquilo: 0, controle: 1, limite: 2, esgotado: 3 };
 
+  // Analisa correlação: mais tela = mais desconforto físico?
   function insightTelaDesconforto(hist) {
     const altaTela = hist.filter((h) => h.horasTela > 8);
     const baixaTela = hist.filter((h) => h.horasTela <= 6);
@@ -541,6 +548,7 @@ const Dashboard = () => {
       };
     return null;
   }
+  // Analisa correlação: telas antes de dormir = pior qualidade do sono?
   function insightTelaAntesSono(hist) {
     const comTela = hist.filter((h) => h.telasAntesDormir === "sim");
     const semTela = hist.filter((h) => h.telasAntesDormir === "nao");
@@ -557,6 +565,7 @@ const Dashboard = () => {
       };
     return null;
   }
+  // Analisa correlação: mais sono = mais disposição?
   function insightSonoDisposicao(hist) {
     const longo = hist.filter((h) => h.horasSono >= 7);
     const curto = hist.filter((h) => h.horasSono < 6);
@@ -573,6 +582,7 @@ const Dashboard = () => {
       };
     return null;
   }
+  // Analisa correlação: mais pausas analógicas = menos sobrecarga?
   function insightPausaSobrecarga(hist) {
     const altaAnalog = hist.filter(
       (h) => (h.pausasAnalogicas || 0) > (h.pausasDigitais || 0),
@@ -597,6 +607,7 @@ const Dashboard = () => {
       };
     return null;
   }
+  // Detecta padrão: 3+ dias consecutivos em "limite" ou "esgotado"?
   function insightTendenciaSobrecarga(hist) {
     const recents = hist.slice(-5);
     const heavy = recents.filter(
@@ -613,6 +624,7 @@ const Dashboard = () => {
     return null;
   }
 
+  // Gera alertas baseados apenas no registro de hoje
   function dailyInsights(d, parts, maxParts) {
     const out = [];
     if (parts.pTela <= 10) {
@@ -667,6 +679,7 @@ const Dashboard = () => {
     return out;
   }
 
+  // Combina insights de hoje + análises cruzadas do histórico (se ≥7 dias)
   function buildInsights(d, parts, maxParts, hist) {
     const insights = dailyInsights(d, parts, maxParts);
     if (hist.length >= 7) {
@@ -692,7 +705,7 @@ const Dashboard = () => {
     return insights;
   }
 
-  // Main analyze (reads React state)
+  // Orquestra toda a análise: calcula score, atualiza histórico, gera tudo (gráficos, alertas, recos)
   function analyze() {
     const d = {
       horasTela: Number(horasTela),

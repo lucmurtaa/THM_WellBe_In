@@ -336,7 +336,13 @@ body::after {
   mix-blend-mode: overlay;
 }
 
-main, header, footer, section {
+main{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+header, footer, section {
   position: relative;
   z-index: 2;
 }
