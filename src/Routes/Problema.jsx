@@ -8,14 +8,14 @@ const Problema = () => {
         <section className="page-hero container">
           <span className="eyebrow">Diagnóstico</span>
           <h1>A saúde se perde no <em className="italic">silêncio</em> dos dias.</h1>
-          <p>Doenças crônicas raramente surgem do nada. Elas se acumulam em meses de sono ruim, estresse não tratado, sedentarismo e alimentação desregulada — sinais que poderiam ter sido vistos a tempo.</p>
+          <p>Doenças crônicas raramente surgem do nada. Elas se acumulam em meses de sono ruim, estresse não tratado, sedentarismo e alimentação desregulada, sinais que poderiam ter sido vistos a tempo.</p>
         </section>
 
         <section className="section container">
           <div className="section-header">
             <span className="eyebrow">Por que isso importa</span>
             <h2>O custo invisível da prevenção que não acontece.</h2>
-            <p>O Brasil enfrenta um paradoxo: tem um sistema de saúde universal, mas a prevenção primária — o tipo mais barato e efetivo de cuidado — segue subutilizada.</p>
+            <p>O Brasil enfrenta um paradoxo: tem um sistema de saúde universal, mas a prevenção primária segue subutilizada.</p>
           </div>
 
           <div className="ctx-grid">
@@ -29,7 +29,7 @@ const Problema = () => {
             <div className="ctx-card">
               <div className="ctx-card__num">72<small>%</small></div>
               <h3>Mortes por doenças crônicas</h3>
-              <p>Das mortes no Brasil são causadas por DCNTs (doenças crônicas não transmissíveis) — diabetes, hipertensão, cardiopatias — em sua maioria preveníveis com mudanças de hábito.</p>
+              <p>Das mortes no Brasil são causadas por DCNTs (doenças crônicas não transmissíveis) em sua maioria preveníveis com mudanças de hábito.</p>
               <div className="ctx-card__src">OMS · Relatório global de DCNTs</div>
             </div>
 
@@ -53,7 +53,7 @@ const Problema = () => {
           <div className="section-header">
             <span className="eyebrow">A lacuna</span>
             <h2>O paciente moderno gera dados — mas ninguém os lê.</h2>
-            <p>Smartwatches, aplicativos de bem-estar, planilhas pessoais. A informação existe. Falta uma camada que conecte os pontos e devolva sentido clínico ao usuário.</p>
+            <p>Smartwatches, aplicativos de bem-estar, planilhas pessoais. A informação existe, mas falta uma camada que conecte os pontos e devolva sentido clínico ao usuário.</p>
           </div>
 
           <ul className="impact-list">

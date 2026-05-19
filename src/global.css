@@ -404,8 +404,8 @@ a {
 
 /* ============ Layout helpers ============ */
 .container {
+  margin: 30px 0;
   max-width: var(--max-w);
-  margin: 0 auto;
   padding-left: var(--gutter);
   padding-right: var(--gutter);
 }
@@ -1045,8 +1045,8 @@ a {
 
 /* ============ Page hero (subpages) ============ */
 .page-hero {
+  margin: 30px 0;
   padding: 6rem 0 3rem;
-  border-bottom: 1px solid var(--border);
 }
 
 .page-hero h1 {
@@ -1126,6 +1126,8 @@ a {
 
 /* ===== Card & feature polish ===== */
 .feature, .ctx-card, .stat__num {
+  margin: 20px 0;
+  padding: 20px;
   border-radius: var(--radius);
   background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
   border: 1px solid var(--border);
@@ -1142,7 +1144,7 @@ a {
 }
 
 /* Subtle rounded grids and spacing */
-.container { max-width: var(--max-w); padding: 0 var(--gutter); margin: 0 auto; }
+.container { max-width: var(--max-w); padding: 0 var(--gutter); margin: 30px 0;}
 
 /* micro-typography adjustments */
 .eyebrow { font-family: var(--font-body); color: var(--text-secondary); font-weight: 600; letter-spacing: 0.08em; font-size: 0.75rem }

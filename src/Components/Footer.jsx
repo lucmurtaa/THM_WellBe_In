@@ -38,7 +38,6 @@ const Footer = () => {
         </div>
         <div className="footer__bottom">
           <span>© <span data-year>2026</span> Wellbe-in · Projeto acadêmico</span>
-          <span>Build 0.1.0 · Static deploy</span>
         </div>
       </div>
     </footer>

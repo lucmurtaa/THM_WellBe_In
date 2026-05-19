@@ -90,12 +90,12 @@ const Home = () => {
           <div className="audience">
             <div className="audience__icon">⌨</div>
             <h4>Programadores</h4>
-            <p>Quem passa o dia depurando código — e termina o dia depurando o próprio cansaço.</p>
+            <p>Quem passa o dia depurando código e termina o dia desgastado.</p>
           </div>
           <div className="audience">
             <div className="audience__icon">🎓</div>
             <h4>Estudantes EAD</h4>
-            <p>Aulas, materiais, provas — tudo no mesmo monitor que também é entretenimento.</p>
+            <p>Aulas, materiais e provas no mesmo monitor usado  entretenimento.</p>
           </div>
           <div className="audience">
             <div className="audience__icon">🏠</div>
@@ -137,7 +137,7 @@ const Home = () => {
       <section id="sobre-projeto" className="section container">
         <div className="section-header">
           <span className="eyebrow">Sobre o projeto</span>
-          <h2>Conheça a equipe e a stack.</h2>
+          <h2>Conheça a equipe e a Wellbe-in</h2>
           <p>Wellbe-in é um produto desenvolvido como parte do Challenge FIAP × THM Estatística por estudantes de Engenharia de Software.</p>
         </div>
 
