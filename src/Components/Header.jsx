@@ -1,29 +1,59 @@
-import React from 'react'
-import '../global.css'
-import { Link } from 'react-router-dom'
+import React from 'react';
+import { NavLink } from 'react-router-dom';
 
+const NAV_LINKS = [
+  { to: '/index.html', label: 'Início' },
+  { to: '/problema.html', label: 'Problema' },
+  { to: '/solucao.html', label: 'Solução' },
+  { to: '/dashboard.html', label: 'Dashboard' },
+  { to: '/sobre.html', label: 'Sobre' }
+];
 
+function Logo() {
+  return (
+    <a href="/index.html" className="nav__logo">
+      <span className="nav__logo-mark" />
+      Wellbe<span>in</span>
+    </a>
+  );
+}
 
-const Header = () => {
+export default function Header() {
   return (
     <nav className="nav">
       <div className="nav__inner">
-        <Link to="/" className="nav__logo">
-          <span className="nav__logo-mark"></span>
-          HealthTrack<span>AI</span>
-        </Link>
-        <button className="nav__toggle" aria-label="Abrir menu">Menu ↓</button>
+        <Logo />
+        <button
+          className="nav__toggle"
+          type="button"
+          aria-label="Abrir menu"
+          onClick={() => {
+            const links = document.querySelector('.nav__links');
+            const toggle = document.querySelector('.nav__toggle');
+            if (!links || !toggle) return;
+            links.classList.toggle('open');
+            toggle.textContent = links.classList.contains('open') ? '× Fechar' : 'Menu ↓';
+          }}
+        >
+          Menu ↓
+        </button>
         <ul className="nav__links">
-          <li><Link to="/home">Início</Link></li>
-          <li><Link to="/problema">Problema</Link></li>
-          <li><Link to="/solucao">Solução</Link></li>
-          <li><Link to="/dashboard">Dashboard</Link></li>
-          <li><Link to="/sobre">Sobre</Link></li>
-          <li className="nav__cta"><Link to="/dashboard">Testar agora</Link></li>
+          {NAV_LINKS.map((link) => (
+            <li key={link.to}>
+              <NavLink
+                to={link.to}
+                end
+                className={({ isActive }) => (isActive ? 'active' : undefined)}
+              >
+                {link.label}
+              </NavLink>
+            </li>
+          ))}
+          <li className="nav__cta">
+            <NavLink to="/dashboard.html">Testar agora</NavLink>
+          </li>
         </ul>
       </div>
     </nav>
-  )
+  );
 }
-
-export default Header

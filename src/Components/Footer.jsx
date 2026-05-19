@@ -1,30 +1,35 @@
-import React from 'react'
-import '../global.css'
-import { Link } from 'react-router-dom'
+import React from 'react';
 
+const NAV_LINKS = [
+  { to: '/index.html', label: 'Início' },
+  { to: '/problema.html', label: 'Problema' },
+  { to: '/solucao.html', label: 'Solução' },
+  { to: '/dashboard.html', label: 'Dashboard' },
+  { to: '/sobre.html', label: 'Sobre' }
+];
 
-const Footer = () => {
+export default function Footer() {
   return (
     <footer className="footer">
       <div className="container">
         <div className="footer__grid">
           <div>
-            <div className="nav__logo" style={{marginBottom: '1rem'}}>
-              <span className="nav__logo-mark"></span>
-              HealthTrack<span>AI</span>
+            <div className="nav__logo" style={{ marginBottom: '1rem' }}>
+              <span className="nav__logo-mark" />
+              Wellbe<span>in</span>
             </div>
-            <p className='saude'>
-              Saúde inteligente e conectada. Um projeto acadêmico desenvolvido para o Challenge FIAP 2025-26 em parceria com a THM Estatística.
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', maxWidth: '32ch' }}>
+              A tecnologia para o bem. Um projeto acadêmico desenvolvido para o Challenge FIAP 2025-26 em parceria com a THM Estatística.
             </p>
           </div>
           <div>
             <h4>Navegação</h4>
             <ul>
-              <li><Link to="/">Home</Link></li>
-              <li><Link to="/problema">Problema</Link></li>
-              <li><Link to="/solucao">Solução</Link></li>
-              <li><Link to="/dashboard">Dashboard</Link></li>
-              <li><Link to="/sobre">Sobre</Link></li>
+              {NAV_LINKS.map((link) => (
+                <li key={link.to}>
+                  <a href={link.to}>{link.label}</a>
+                </li>
+              ))}
             </ul>
           </div>
           <div>
@@ -37,12 +42,10 @@ const Footer = () => {
           </div>
         </div>
         <div className="footer__bottom">
-          <span>© <span data-year>2026</span> HealthTrack AI · Projeto acadêmico</span>
-          <span>Build 0.1.0 · Static deploy</span>
+          <span>© <span data-year>{new Date().getFullYear()}</span> Wellbe-in · A tecnologia para o bem.</span>
+          <span>Build 0.1.0 · React + Vite</span>
         </div>
       </div>
     </footer>
-  )
+  );
 }
-
-export default Footer
