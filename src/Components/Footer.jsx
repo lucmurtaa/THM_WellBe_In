@@ -19,7 +19,7 @@ const Footer = () => {
           </div>
           <div>
             <h4>Navegação</h4>
-            <ul>
+            <ul className='NavFooter'>
               <li><Link to="/">Home</Link></li>
               <li><Link to="/problema">Problema</Link></li>
               <li><Link to="/solucao">Solução</Link></li>
@@ -27,17 +27,6 @@ const Footer = () => {
               <li><Link to="/sobre">Sobre</Link></li>
             </ul>
           </div>
-          <div>
-            <h4>Parceria</h4>
-            <ul>
-              <li>FIAP — Engenharia de Software</li>
-              <li>THM Estatística</li>
-              <li>Challenge 2026</li>
-            </ul>
-          </div>
-        </div>
-        <div className="footer__bottom">
-          <span>© <span data-year>2026</span> Wellbe-in · Projeto acadêmico</span>
         </div>
       </div>
     </footer>
