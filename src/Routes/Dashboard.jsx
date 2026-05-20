@@ -1154,25 +1154,6 @@ const Dashboard = () => {
                     Seus indicadores estão dentro de faixas saudáveis. Continue
                     o monitoramento.
                   </p>
-
-                  <div className="dual-score">
-                    <div className="dual-score__item">
-                      <span className="dual-score__label">Equilíbrio</span>
-                      <span className="dual-score__val" id="balanceVal">
-                        —
-                      </span>
-                    </div>
-                    <div className="dual-score__divider"></div>
-                    <div className="dual-score__item">
-                      <span className="dual-score__label">Desgaste</span>
-                      <span
-                        className="dual-score__val dual-score__val--fatigue"
-                        id="fatigueVal"
-                      >
-                        —
-                      </span>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="gauge">

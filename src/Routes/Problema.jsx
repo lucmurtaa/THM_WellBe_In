@@ -94,11 +94,6 @@ const Problema = () => {
               </div>
             </li>
           </ul>
-
-          <blockquote className="quote">
-            "A revolução não está em coletar mais dados de saúde — está em transformar dados em decisões que o paciente entende e age sobre eles."
-            <cite>— Premissa do projeto HealthTrack AI</cite>
-          </blockquote>
         </section>
 
         <section className="section container">
