@@ -12,7 +12,8 @@ const Header = () => {
         <Link to="/" className="nav__logo">
           <img src={logoWellBein} alt="logo wellbe-in" className='logo-Wellbe-in'/>
         </Link>
-        <button className="nav__toggle" aria-label="Abrir menu">Menu ↓</button>
+        <label className="nav__toggle" aria-label="Abrir menu" htmlFor='toggle__input'>Menu ↓</label>
+        <input id='toggle__input' type="checkbox" hidden className='toggle__input'/>
         <ul className="nav__links">
           <li><Link to="/home">Início</Link></li>
           <li><Link to="/problema">Problema</Link></li>

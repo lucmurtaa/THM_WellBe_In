@@ -1,1404 +1,1278 @@
-﻿import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useMemo, useReducer, useState } from "react";
 import "./dashboard.css";
 
-const Dashboard = () => {
-  const [horasTela, setHorasTela] = useState(6);
-  const [telasAntesDormir, setTelasAntesDormir] = useState("nao");
-  const [pausasAnalogicas, setPausasAnalogicas] = useState(3);
-  const [pausasDigitais, setPausasDigitais] = useState(2);
-  const [horasSono, setHorasSono] = useState(7);
-  const [qualidadeSono, setQualidadeSono] = useState("boa");
-  const [sobrecarga, setSobrecarga] = useState("controle");
-  const [disposicao, setDisposicao] = useState("normal");
-  const [atividade, setAtividade] = useState("ate30");
-  const [desconforto, setDesconforto] = useState("nenhum");
+// Estado inicial padrão do formulário.
+// Define os valores iniciais dos inputs do dashboard
+// e também serve como base para resetar os campos futuramente.
+const defaultForm = {
+  horasTela: 6,
+  telasAntesDormir: "nao",
+  pausasAnalogicas: 3,
+  pausasDigitais: 2,
+  horasSono: 7,
+  qualidadeSono: "boa",
+  sobrecarga: "controle",
+  disposicao: "normal",
+  atividade: "ate30",
+  desconforto: "nenhum",
+};
 
-  // Helpers: history storage
-  const STORE_KEY = "wellbein_history";
-
-  const $ = (sel) => document.querySelector(sel);
-
-  // Carrega histórico de análises do sessionStorage ou gera dados fake iniciais
-  function loadHistory() {
-    try {
-      const raw = sessionStorage.getItem(STORE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (_) {}
-    const labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-    const seed = labels.map((day, i) => ({
-      day,
-      score: 55 + Math.round(Math.random() * 30),
-      horasTela: 4 + Math.random() * 6,
-      telasAntesDormir: Math.random() < 0.45 ? "sim" : "nao",
-      pausasAnalogicas: Math.floor(Math.random() * 5),
-      pausasDigitais: Math.floor(Math.random() * 4),
-      horasSono: 5.5 + Math.random() * 3,
-      qualidadeSono: ["muitoboa", "boa", "media", "ruim"][
-        Math.floor(Math.random() * 4)
-      ],
-      sobrecarga: ["tranquilo", "controle", "limite", "esgotado"][
-        Math.floor(Math.random() * 4)
-      ],
-      disposicao: ["muitoalta", "alta", "normal", "baixa", "muitobaixa"][
-        Math.floor(Math.random() * 5)
-      ],
-      desconforto: ["nenhum", "leve", "moderado", "intenso"][
-        Math.floor(Math.random() * 4)
-      ],
-    }));
-    return seed;
+// Reducer responsável por controlar todas as alterações do formulário.
+// Centraliza a atualização dos campos em um único fluxo,
+// facilitando manutenção e integração futura com APIs/banco de dados.
+function formReducer(state, action) {
+  if (action.type === "SET_FIELD") {
+    return { ...state, [action.field]: action.value };
   }
-
-  // Adiciona a análise de hoje ao histórico mantendo últimos 7 dias
-  function pushHistory(score, d) {
-    const hist = loadHistory();
-    const today = "Hoje";
-    const filtered = hist.filter((h) => h.day !== today);
-    const trimmed = filtered.slice(-6);
-    trimmed.push({
-      day: today,
-      score,
-      horasTela: d.horasTela,
-      telasAntesDormir: d.telasAntesDormir,
-      pausasAnalogicas: d.pausasAnalogicas,
-      pausasDigitais: d.pausasDigitais,
-      horasSono: d.horasSono,
-      qualidadeSono: d.qualidadeSono,
-      sobrecarga: d.sobrecarga,
-      disposicao: d.disposicao,
-      desconforto: d.desconforto,
-    });
-    try {
-      sessionStorage.setItem(STORE_KEY, JSON.stringify(trimmed));
-    } catch (_) {}
-    return trimmed;
+  if (action.type === "RESET") {
+    return { ...defaultForm };
   }
+  return state;
+}
 
-  // Calcula pontuação total (0-100) baseado em 6 dimensões de saúde digital
-  function scoreBalance(d) {
-    let pTela;
-    if (d.horasTela <= 4) pTela = 25;
-    else if (d.horasTela <= 6) pTela = 18;
-    else if (d.horasTela <= 8) pTela = 10;
-    else pTela = 0;
+// Gera datas fictícias em formato ISO para criação do histórico mockado.
+// Simula registros antigos do usuário para testes visuais e análises.
+function makeIsoTimestamp(daysAgo, hour, minute = 0) {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - daysAgo);
+  date.setHours(hour, minute, 0, 0);
+  return date.toISOString();
+}
 
-    const pAntesDormir = d.telasAntesDormir === "nao" ? 10 : 0;
+// Função principal de cálculo do Score de Equilíbrio Digital.
+// Recebe os dados do formulário, calcula cada critério individualmente,
+// soma as pontuações e retorna um objeto completo com score e métricas.
+function scoreBalance(data) {
+  let pTela;
+  if (data.horasTela <= 4) pTela = 25;
+  else if (data.horasTela <= 6) pTela = 18;
+  else if (data.horasTela <= 8) pTela = 10;
+  else pTela = 0;
 
-    let pPausas;
-    if (d.pausasAnalogicas >= 5) pPausas = 20;
-    else if (d.pausasAnalogicas >= 3) pPausas = 15;
-    else if (d.pausasAnalogicas >= 1) pPausas = 8;
-    else pPausas = 0;
+  const pAntesDormir = data.telasAntesDormir === "nao" ? 10 : 0;
 
-    let pSonoHoras;
-    if (d.horasSono >= 7 && d.horasSono <= 9) pSonoHoras = 15;
-    else if (Math.floor(d.horasSono) === 6) pSonoHoras = 10;
-    else if (Math.floor(d.horasSono) === 5) pSonoHoras = 5;
-    else pSonoHoras = 0;
+  let pPausas;
+  if (data.pausasAnalogicas >= 5) pPausas = 20;
+  else if (data.pausasAnalogicas >= 3) pPausas = 15;
+  else if (data.pausasAnalogicas >= 1) pPausas = 8;
+  else pPausas = 0;
 
-    const qualMap = { muitoboa: 10, boa: 8, media: 5, ruim: 2, muitoruim: 0 };
-    const pSonoQual = qualMap[d.qualidadeSono] ?? 5;
+  let pSonoHoras;
+  if (data.horasSono >= 7 && data.horasSono <= 9) pSonoHoras = 15;
+  else if (Math.floor(data.horasSono) === 6) pSonoHoras = 10;
+  else if (Math.floor(data.horasSono) === 5) pSonoHoras = 5;
+  else pSonoHoras = 0;
 
-    const sobMap = { tranquilo: 20, controle: 15, limite: 5, esgotado: 0 };
-    const pSobrecarga = sobMap[d.sobrecarga] ?? 10;
+  const qualMap = { muitoboa: 10, boa: 8, media: 5, ruim: 2, muitoruim: 0 };
+  const pSonoQual = qualMap[data.qualidadeSono] ?? 5;
 
-    const total =
-      pTela + pAntesDormir + pPausas + pSonoHoras + pSonoQual + pSobrecarga;
+  const sobMap = { tranquilo: 20, controle: 15, limite: 5, esgotado: 0 };
+  const pSobrecarga = sobMap[data.sobrecarga] ?? 10;
+
+  const total =
+    pTela + pAntesDormir + pPausas + pSonoHoras + pSonoQual + pSobrecarga;
+
+  return {
+    score: Math.max(0, Math.min(100, total)),
+    parts: {
+      pTela,
+      pAntesDormir,
+      pPausas,
+      pSonoHoras,
+      pSonoQual,
+      pSobrecarga,
+    },
+    maxParts: {
+      pTela: 25,
+      pAntesDormir: 10,
+      pPausas: 20,
+      pSonoHoras: 15,
+      pSonoQual: 10,
+      pSobrecarga: 20,
+    },
+    raw: data,
+  };
+}
+
+// Classifica o score final em faixas interpretativas.
+// Utilizado para determinar o estado geral do usuário no dashboard.
+function classifyBand(score) {
+  if (score >= 80) return "equilibrada";
+  if (score >= 60) return "atencao";
+  if (score >= 40) return "moderado";
+  return "alto";
+}
+
+// Centraliza os textos explicativos de cada faixa de score.
+// Facilita manutenção e futuras alterações de conteúdo.
+const BAND_INFO = {
+  equilibrada: {
+    label: "Rotina equilibrada",
+    desc: "Seus indicadores estão dentro de faixas saudáveis. A rotina digital de hoje favorece sua recuperação física e mental.",
+  },
+  atencao: {
+    label: "Atenção",
+    desc: "Alguns sinais de fadiga já aparecem. Ajustes temporais irão impedir que o padrão se estabilize.",
+  },
+  moderado: {
+    label: "Desgaste moderado",
+    desc: "Várias áreas estão fora do ideal. Priorize descanso, pausas e qualidade de sono nos próximos dias.",
+  },
+  alto: {
+    label: "Alto desgaste",
+    desc: "Padrões de sobrecarga digital estão prevalecendo. Desconecte de verdade e recupere energia mental e física.",
+  },
+};
+
+// Verifica se o usuário possui histórico suficiente
+// para liberar análises comportamentais avançadas.
+// Regra mínima: 7 registros.
+function hasMinimumHistory(history) {
+  return history.length >= 7;
+}
+
+// Calcula média numérica de uma lista de valores.
+// Utilizado nos cruzamentos comportamentais do sistema.
+function average(values) {
+  return values.length
+    ? values.reduce((sum, value) => sum + value, 0) / values.length
+    : 0;
+}
+
+// Escalas numéricas utilizadas para transformar estados textuais
+// em valores comparáveis matematicamente.
+// Permitem médias, tendências e cruzamentos.
+const discomfortScale = { nenhum: 0, leve: 1, moderado: 2, intenso: 3 };
+const moodScale = { muitoalta: 4, alta: 3, normal: 2, baixa: 1, muitobaixa: 0 };
+const sleepQualityScale = {
+  muitoboa: 4,
+  boa: 3,
+  media: 2,
+  ruim: 1,
+  muitoruim: 0,
+};
+const overloadScale = { tranquilo: 0, controle: 1, limite: 2, esgotado: 3 };
+
+// Analisa relação entre excesso de tela e desconforto físico.
+// Gera insight caso o padrão seja recorrente no histórico.
+function insightTelaDesconforto(history) {
+  const excess = history.filter((item) => item.horasTela > 8);
+  const balanced = history.filter((item) => item.horasTela <= 6);
+  if (excess.length < 2 || balanced.length < 2) return null;
+  const avgExcess = average(
+    excess.map((item) => discomfortScale[item.desconforto] ?? 0),
+  );
+  const avgBalanced = average(
+    balanced.map((item) => discomfortScale[item.desconforto] ?? 0),
+  );
+  if (avgExcess - avgBalanced >= 0.6) {
     return {
-      score: Math.max(0, Math.min(100, total)),
-      parts: {
-        pTela,
-        pAntesDormir,
-        pPausas,
-        pSonoHoras,
-        pSonoQual,
-        pSobrecarga,
-      },
-      maxParts: {
-        pTela: 25,
-        pAntesDormir: 10,
-        pPausas: 20,
-        pSonoHoras: 15,
-        pSonoQual: 10,
-        pSobrecarga: 20,
-      },
-      raw: d,
+      level: "warn",
+      icon: "⌨",
+      title: "Tela × desconforto físico",
+      msg: "Dias longos de tela estão associados a mais desconforto. Alongue-se e ajuste sua postura.",
+      tag: "Cruzamento",
     };
   }
+  return null;
+}
 
-  // Classifica score em 4 faixas de risco (equilibrada, atenção, moderado, alto)
-  function band(score) {
-    if (score >= 80) return "equilibrada";
-    if (score >= 60) return "atencao";
-    if (score >= 40) return "moderado";
-    return "alto";
+// Analisa impacto do uso de telas antes de dormir
+// na qualidade do sono do usuário.
+function insightTelaAntesSono(history) {
+  const comTela = history.filter((item) => item.telasAntesDormir === "sim");
+  const semTela = history.filter((item) => item.telasAntesDormir === "nao");
+  if (comTela.length < 2 || semTela.length < 2) return null;
+  const avgCom = average(
+    comTela.map((item) => sleepQualityScale[item.qualidadeSono] ?? 2),
+  );
+  const avgSem = average(
+    semTela.map((item) => sleepQualityScale[item.qualidadeSono] ?? 2),
+  );
+  if (avgSem - avgCom >= 0.5) {
+    return {
+      level: "info",
+      icon: "🌙",
+      title: "Telas antes de dormir × sono",
+      msg: "Quando você evita telas antes de dormir, seu sono tende a apresentar mais qualidade.",
+      tag: "Cruzamento",
+    };
   }
+  return null;
+}
 
-  const BAND_INFO = {
-    equilibrada: {
-      label: "Rotina equilibrada",
-      desc: "Seus indicadores estão dentro de faixas saudáveis. A rotina digital de hoje favorece a sua recuperação física e mental — mantenha a consistência.",
-    },
-    atencao: {
-      label: "Atenção",
-      desc: "Alguns sinais de fadiga começam a aparecer. Pequenos ajustes hoje evitam que esses padrões se acumulem ao longo da semana.",
-    },
-    moderado: {
-      label: "Desgaste moderado",
-      desc: "Múltiplas dimensões estão fora do ideal. Reduzir o tempo de tela e melhorar a recuperação são prioridades para os próximos dias.",
-    },
-    alto: {
-      label: "Alto desgaste",
-      desc: "Sua rotina mostra sinais consistentes de sobrecarga digital. Considere uma desconexão real e priorize sono, pausas analógicas e atividade física.",
-    },
-  };
-
-  // Atualiza o gauge circular visual com animação de preenchimento
-  function updateGauge(balance) {
-    const circle = document.getElementById("gaugeFill");
-    if (!circle) return;
-    const r = +circle.getAttribute("r");
-    const circumference = 2 * Math.PI * r;
-    circle.setAttribute("stroke-dasharray", circumference);
-    const offset = circumference * (1 - balance / 100);
-    circle.setAttribute("stroke-dashoffset", offset);
-    const num = document.getElementById("gaugeNum");
-    if (num) num.textContent = balance;
+// Relaciona quantidade de sono com nível de disposição diária.
+// Detecta padrões de recuperação física e mental.
+function insightSonoDisposicao(history) {
+  const goodSleep = history.filter((item) => item.horasSono >= 7);
+  const shortSleep = history.filter((item) => item.horasSono < 6);
+  if (goodSleep.length < 2 || shortSleep.length < 2) return null;
+  const avgGood = average(
+    goodSleep.map((item) => moodScale[item.disposicao] ?? 2),
+  );
+  const avgShort = average(
+    shortSleep.map((item) => moodScale[item.disposicao] ?? 2),
+  );
+  if (avgGood - avgShort >= 0.6) {
+    return {
+      level: "ok",
+      icon: "☀",
+      title: "Sono × disposição",
+      msg: "Mais sono costuma significar mais disposição no dia seguinte.",
+      tag: "Cruzamento",
+    };
   }
+  return null;
+}
 
-  // Atualiza um card de métrica (valor, barra de progresso, caption, estado visual)
-  function setMetric(id, value, unit, state, barPct, caption) {
-    const card = document.getElementById(id);
-    if (!card) return;
-    card.dataset.state = state;
-    const valEl = card.querySelector(".metric__num-val");
-    if (valEl) valEl.textContent = value;
-    const unitEl = card.querySelector(".metric__num-unit");
-    if (unitEl) unitEl.textContent = unit;
-    const bar = card.querySelector(".metric__bar-fill");
-    if (bar) bar.style.width = `${barPct}%`;
-    const cap = card.querySelector(".metric__caption");
-    if (cap) cap.textContent = caption;
+// Analisa se pausas analógicas reduzem a sobrecarga mental.
+// Compara pausas reais vs pausas digitais.
+function insightPausasSobrecarga(history) {
+  const analog = history.filter(
+    (item) => item.pausasAnalogicas > item.pausasDigitais,
+  );
+  const digital = history.filter(
+    (item) => item.pausasDigitais > item.pausasAnalogicas,
+  );
+  if (analog.length < 2 || digital.length < 2) return null;
+  const avgAnalog = average(
+    analog.map((item) => overloadScale[item.sobrecarga] ?? 1),
+  );
+  const avgDigital = average(
+    digital.map((item) => overloadScale[item.sobrecarga] ?? 1),
+  );
+  if (avgDigital - avgAnalog >= 0.5) {
+    return {
+      level: "info",
+      icon: "⏸",
+      title: "Pausas analógicas × sobrecarga",
+      msg: "Mais pausas fora da tela costumam acompanhar menos sobrecarga.",
+      tag: "Cruzamento",
+    };
   }
+  return null;
+}
 
-  // Atualiza os 4 cards de métricas principais (tela, pausas, sono, sobrecarga)
-  function updateMetrics(d, parts, maxParts) {
-    setMetric(
-      "metricTela",
-      d.horasTela.toFixed(1),
-      "h",
-      telaState(d.horasTela),
-      Math.min(100, (d.horasTela / 12) * 100),
-      telaCaption(d.horasTela),
-    );
-    setMetric(
-      "metricPausas",
-      d.pausasAnalogicas,
-      "pausas",
-      pausaState(d.pausasAnalogicas),
-      Math.min(100, (d.pausasAnalogicas / 6) * 100),
-      pausaCaption(d.pausasAnalogicas),
-    );
-    const sonoSubScore = parts.pSonoHoras + parts.pSonoQual;
-    setMetric(
-      "metricSono",
-      d.horasSono.toFixed(1),
-      "h",
-      sonoState(sonoSubScore),
-      (sonoSubScore / 25) * 100,
-      sonoCaption(d.horasSono, d.qualidadeSono),
-    );
-    setMetric(
-      "metricSobrecarga",
-      sobrecargaLabel(d.sobrecarga),
-      "",
-      sobrecargaState(d.sobrecarga),
-      sobrecargaPct(d.sobrecarga),
-      sobrecargaCaption(d.sobrecarga),
-    );
+// Detecta tendência recente de esgotamento mental.
+// Gera alertas preventivos quando padrões críticos aparecem.
+function insightTendenciaSobrecarga(history) {
+  const recent = history.slice(-5);
+  const overloaded = recent.filter(
+    (item) => item.sobrecarga === "limite" || item.sobrecarga === "esgotado",
+  );
+  if (overloaded.length >= 3) {
+    return {
+      level: "bad",
+      icon: "⚠",
+      title: "Tendência de sobrecarga",
+      msg: `Você esteve no limite/esgotado em ${overloaded.length} dos últimos ${recent.length} dias. Retome a recuperação rapidamente.`,
+      tag: "Alerta preventivo",
+    };
   }
+  return null;
+}
 
-  // State helpers copied
-  const telaState = (h) => (h <= 6 ? "ok" : h <= 8 ? "warn" : "bad");
-  const telaCaption = (h) =>
-    h <= 4
-      ? "Dentro do ideal"
-      : h <= 6
-        ? "Equilibrado"
-        : h <= 8
-          ? "Acumulando desgaste"
-          : "Exposição elevada";
-  const pausaState = (p) =>
-    p >= 5 ? "ok" : p >= 3 ? "ok" : p >= 1 ? "warn" : "bad";
-  const pausaCaption = (p) =>
-    p >= 5
-      ? "Excelente cadência"
-      : p >= 3
-        ? "Boa cadência"
-        : p >= 1
-          ? "Pode aumentar"
-          : "Nenhuma pausa real";
-  const sonoState = (s) => (s >= 18 ? "ok" : s >= 12 ? "warn" : "bad");
-  const sonoCaption = (h, q) => {
-    const tagH =
-      h >= 7 && h <= 9
-        ? "duração ideal"
-        : h >= 6
-          ? "duração curta"
-          : "duração insuficiente";
-    const tagQ =
-      {
-        muitoboa: "qualidade ótima",
-        boa: "qualidade boa",
-        media: "qualidade média",
-        ruim: "qualidade ruim",
-        muitoruim: "qualidade péssima",
-      }[q] || "";
-    return `${tagH} · ${tagQ}`;
-  };
+// Função central das análises comportamentais.
+// Executa todos os cruzamentos inteligentes do sistema.
+function buildBehavioralInsights(history) {
+  if (!hasMinimumHistory(history)) return [];
+  return [
+    insightTelaDesconforto(history),
+    insightTelaAntesSono(history),
+    insightSonoDisposicao(history),
+    insightPausasSobrecarga(history),
+    insightTendenciaSobrecarga(history),
+  ].filter(Boolean);
+}
 
-  const sobrecargaLabel = (s) =>
-    ({
-      tranquilo: "Tranquilo",
-      controle: "Sob controle",
-      limite: "No limite",
-      esgotado: "Esgotado",
-    })[s] || "—";
-  const sobrecargaState = (s) =>
-    s === "tranquilo" || s === "controle"
+// Organiza o histórico em formato adequado para gráficos.
+// Converte datas e scores em pontos visuais.
+function getTrendPoints(history) {
+  return history
+    .slice()
+    .sort((a, b) => new Date(a.reportedAt) - new Date(b.reportedAt))
+    .map((entry) => ({
+      label: new Date(entry.reportedAt).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+      }),
+      score: entry.score,
+    }));
+}
+
+// Converte pontuações internas em porcentagens.
+// Utilizado em gráficos radar e indicadores visuais.
+function getRadarRatios(parts, maxParts) {
+  return Object.keys(parts).map((key) =>
+    Math.round((parts[key] / maxParts[key]) * 100),
+  );
+}
+
+// Formata datas ISO para exibição amigável no dashboard.
+function formatDateTime(isoString) {
+  return new Date(isoString).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+// Regra de negócio principal do MVP.
+// Permite apenas 1 relatório a cada 16 horas.
+function isReportAllowed(lastReportAt, now = new Date()) {
+  if (!lastReportAt) return true;
+  const last = new Date(lastReportAt);
+  const elapsed = (now.getTime() - last.getTime()) / (1000 * 60 * 60);
+  return elapsed >= 16;
+}
+
+// Calcula quando o próximo relatório poderá ser enviado.
+function nextReportAllowed(lastReportAt) {
+  if (!lastReportAt) return null;
+  const next = new Date(lastReportAt);
+  next.setHours(next.getHours() + 16);
+  return next;
+}
+
+// Cria histórico fictício para demonstração do sistema.
+// Simula dados vindos de um banco de dados real.
+function createMockHistory() {
+  return [
+    {
+      id: "hist_001",
+      userId: "user_001",
+      reportedAt: makeIsoTimestamp(7, 18, 20),
+      horasTela: 5.8,
+      telasAntesDormir: "sim",
+      pausasAnalogicas: 2,
+      pausasDigitais: 3,
+      horasSono: 6,
+      qualidadeSono: "media",
+      sobrecarga: "controle",
+      disposicao: "normal",
+      atividade: "ate30",
+      desconforto: "moderado",
+    },
+    {
+      id: "hist_002",
+      userId: "user_001",
+      reportedAt: makeIsoTimestamp(6, 11, 15),
+      horasTela: 4.3,
+      telasAntesDormir: "nao",
+      pausasAnalogicas: 6,
+      pausasDigitais: 0,
+      horasSono: 8.5,
+      qualidadeSono: "muitoboa",
+      sobrecarga: "tranquilo",
+      disposicao: "muitoalta",
+      atividade: "mais1h",
+      desconforto: "nenhum",
+    },
+    {
+      id: "hist_003",
+      userId: "user_001",
+      reportedAt: makeIsoTimestamp(5, 20, 10),
+      horasTela: 7,
+      telasAntesDormir: "nao",
+      pausasAnalogicas: 3,
+      pausasDigitais: 1,
+      horasSono: 7.2,
+      qualidadeSono: "boa",
+      sobrecarga: "controle",
+      disposicao: "alta",
+      atividade: "mais1h",
+      desconforto: "leve",
+    },
+    {
+      id: "hist_004",
+      userId: "user_001",
+      reportedAt: makeIsoTimestamp(4, 9, 40),
+      horasTela: 9.1,
+      telasAntesDormir: "sim",
+      pausasAnalogicas: 1,
+      pausasDigitais: 2,
+      horasSono: 5.5,
+      qualidadeSono: "ruim",
+      sobrecarga: "limite",
+      disposicao: "baixa",
+      atividade: "ate30",
+      desconforto: "moderado",
+    },
+    {
+      id: "hist_005",
+      userId: "user_001",
+      reportedAt: makeIsoTimestamp(3, 17, 50),
+      horasTela: 6.5,
+      telasAntesDormir: "nao",
+      pausasAnalogicas: 4,
+      pausasDigitais: 2,
+      horasSono: 7.5,
+      qualidadeSono: "boa",
+      sobrecarga: "controle",
+      disposicao: "alta",
+      atividade: "30a60",
+      desconforto: "leve",
+    },
+    {
+      id: "hist_006",
+      userId: "user_001",
+      reportedAt: makeIsoTimestamp(2, 20, 30),
+      horasTela: 8.2,
+      telasAntesDormir: "sim",
+      pausasAnalogicas: 2,
+      pausasDigitais: 3,
+      horasSono: 6,
+      qualidadeSono: "media",
+      sobrecarga: "limite",
+      disposicao: "normal",
+      atividade: "ate30",
+      desconforto: "moderado",
+    },
+    {
+      id: "hist_007",
+      userId: "user_001",
+      reportedAt: makeIsoTimestamp(1, 18, 20),
+      horasTela: 6.5,
+      telasAntesDormir: "nao",
+      pausasAnalogicas: 4,
+      pausasDigitais: 1,
+      horasSono: 7.8,
+      qualidadeSono: "boa",
+      sobrecarga: "controle",
+      disposicao: "alta",
+      atividade: "30a60",
+      desconforto: "leve",
+    },
+  ].map((entry) => ({ ...entry, score: scoreBalance(entry).score }));
+}
+
+// Histórico mockado utilizado temporariamente durante o desenvolvimento.
+const MOCK_HISTORY = createMockHistory();
+
+// Simulação temporária de camada de banco de dados.
+// Estruturada para facilitar futura substituição por API real.
+const mockDatabase = {
+  readHistory: async () => {
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    return [...MOCK_HISTORY].sort(
+      (a, b) => new Date(b.reportedAt) - new Date(a.reportedAt),
+    );
+  },
+  saveReport: async (record) => {
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    MOCK_HISTORY.unshift(record);
+    return [...MOCK_HISTORY].sort(
+      (a, b) => new Date(b.reportedAt) - new Date(a.reportedAt),
+    );
+  },
+};
+
+// Define estado visual das métricas do dashboard.
+// Retorna status como ok, warn ou bad.
+function metricState(type, value) {
+  if (type === "tela") return value <= 6 ? "ok" : value <= 8 ? "warn" : "bad";
+  if (type === "pausas") return value >= 3 ? "ok" : value >= 1 ? "warn" : "bad";
+  if (type === "sono") return value >= 18 ? "ok" : value >= 12 ? "warn" : "bad";
+  if (type === "sobrecarga")
+    return value === "controle" || value === "tranquilo"
       ? "ok"
-      : s === "limite"
+      : value === "limite"
         ? "warn"
         : "bad";
-  const sobrecargaPct = (s) =>
-    ({ tranquilo: 100, controle: 75, limite: 35, esgotado: 10 })[s] || 50;
-  const sobrecargaCaption = (s) =>
-    ({
-      tranquilo: "Estado mental saudável",
-      controle: "Sob gestão",
-      limite: "Risco de esgotamento",
-      esgotado: "Recuperação urgente",
-    })[s] || "";
+  return "ok";
+}
 
-  // Renderiza lista de alertas e insights no HTML
-  function renderAlerts(list) {
-    const container = document.getElementById("alertList");
-    const count = document.getElementById("alertCount");
-    const note = document.getElementById("alertsNote");
-    const hist = loadHistory();
-    if (!container) return;
-    container.innerHTML = "";
-    list.forEach((a) => {
-      const lvl =
-        a.level === "bad"
-          ? "alert--bad"
-          : a.level === "warn"
-            ? "alert--warn"
-            : a.level === "info"
-              ? "alert--info"
-              : "";
-      container.insertAdjacentHTML(
-        "beforeend",
-        `
-        <div class="alert ${lvl}">
-          <div class="alert__icon">${a.icon}</div>
-          <div class="alert__body">
-            <div class="alert__title">${a.title}</div>
-            <p class="alert__msg">${a.msg}</p>
-            <span class="alert__tag">${a.tag}</span>
-          </div>
-        </div>
-      `,
-      );
-    });
-    if (count) count.textContent = `${list.length} sinais`;
-    if (note) {
-      note.textContent =
-        hist.length >= 7
-          ? "Análises cruzando seu histórico completo (≥7 dias)."
-          : `Insights baseados no dia de hoje. Análises comportamentais avançadas aparecem a partir de 7 dias de registro (${hist.length}/7).`;
-    }
+// Retorna descrições textuais auxiliares para cada métrica.
+function metricCaption(type, value) {
+  if (type === "tela") {
+    if (value <= 4) return "Dentro do ideal";
+    if (value <= 6) return "Equilibrado";
+    if (value <= 8) return "Acumulando desgaste";
+    return "Exposição elevada";
   }
+  if (type === "pausas") {
+    if (value >= 5) return "Excelente cadência";
+    if (value >= 3) return "Boa cadência";
+    if (value >= 1) return "Pode aumentar";
+    return "Nenhuma pausa real";
+  }
+  if (type === "sono") return "Sono e qualidade combinados";
+  if (type === "sobrecarga") {
+    if (value === "tranquilo") return "Estado mental saudável";
+    if (value === "controle") return "Sob gestão";
+    if (value === "limite") return "Risco de esgotamento";
+    return "Recuperação urgente";
+  }
+  return "";
+}
 
-  // Gera até 4 recomendações personalizadas baseadas no padrão diário
-  function generateRecommendations(d, parts) {
+// Componente principal do dashboard.
+// Centraliza estados, análises, histórico,
+// regras de negócio e renderização da interface.
+function Dashboard() {
+  const [history, setHistory] = useState([]);
+  const [formState, dispatch] = useReducer(formReducer, defaultForm);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState({ type: "idle", text: "" });
+
+  // Carrega o histórico inicial da aplicação.
+  // Simula leitura assíncrona de banco de dados.
+  useEffect(() => {
+    let mounted = true;
+    mockDatabase.readHistory().then((records) => {
+      if (!mounted) return;
+      setHistory(records);
+      setLoading(false);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Mantém o histórico sempre ordenado do mais recente para o mais antigo.
+  const sortedHistory = useMemo(
+    () =>
+      [...history].sort(
+        (a, b) => new Date(b.reportedAt) - new Date(a.reportedAt),
+      ),
+    [history],
+  );
+
+  // Recupera o relatório mais recente do usuário.
+  const latestReport = sortedHistory[0] ?? null;
+
+  // Verifica se um novo relatório pode ser enviado,
+  // aplicando a regra das 16 horas.
+  const reportAllowed = useMemo(
+    () => isReportAllowed(latestReport?.reportedAt),
+    [latestReport],
+  );
+
+  // Calcula quando o próximo relatório será liberado.
+  const nextAllowedAt = useMemo(
+    () => (latestReport ? nextReportAllowed(latestReport.reportedAt) : null),
+    [latestReport],
+  );
+
+  // Executa análise completa do formulário atual em tempo real.
+  const analysis = useMemo(() => scoreBalance(formState), [formState]);
+
+  // Determina classificação textual do score atual.
+  const band = useMemo(() => classifyBand(analysis.score), [analysis.score]);
+
+  // Verifica se já existem dados suficientes
+  // para liberar análises comportamentais avançadas.
+  const enoughHistory = useMemo(
+    () => hasMinimumHistory(sortedHistory),
+    [sortedHistory],
+  );
+
+  // Prepara dados históricos para gráficos de tendência.
+  const trendData = useMemo(
+    () => getTrendPoints(sortedHistory),
+    [sortedHistory],
+  );
+
+  // Gera porcentagens utilizadas em gráficos radar.
+  const radarRatios = useMemo(
+    () => getRadarRatios(analysis.parts, analysis.maxParts),
+    [analysis.parts, analysis.maxParts],
+  );
+
+  // Executa os cruzamentos comportamentais personalizados.
+  const behavioralInsights = useMemo(
+    () => buildBehavioralInsights(sortedHistory),
+    [sortedHistory],
+  );
+
+  // Gera recomendações automáticas com base nos hábitos atuais do usuário.
+  const recommendations = useMemo(() => {
     const recs = [];
-    if (parts.pTela <= 10)
+    if (analysis.parts.pTela <= 10)
       recs.push(
         "Aplique a regra 20-20-20: a cada 20 minutos olhe para algo a 6m por 20s.",
       );
-    if (parts.pPausas <= 8)
-      recs.push("Programe 5 pausas curtas fora da tela (2-3 min).");
-    if (d.telasAntesDormir === "sim")
-      recs.push('Crie uma rotina de "wind-down" 30 min antes de dormir.');
-    if (parts.pSonoHoras < 15 || parts.pSonoQual < 8)
-      recs.push("Estabeleça horário fixo para dormir e acordar.");
-    if (d.sobrecarga === "limite" || d.sobrecarga === "esgotado")
-      recs.push("Pratique 5 minutos de respiração 4-7-8 duas vezes ao dia.");
-    if (d.atividade === "nenhuma" || d.atividade === "ate30")
-      recs.push("Inclua ao menos 30 min de movimento diário.");
-    if (d.desconforto === "moderado" || d.desconforto === "intenso")
+    if (analysis.parts.pPausas <= 8)
       recs.push(
-        "Faça uma checagem ergonômica: monitor na linha dos olhos, pés no chão.",
+        "Programe pausas curtas fora da tela a cada bloco de trabalho.",
       );
-    if (recs.length === 0) {
-      recs.push("Mantenha a consistência: registre seus dados diariamente.");
-      recs.push('Experimente "pausas de janela" — 1 minuto entre tarefas.');
+    if (formState.telasAntesDormir === "sim")
+      recs.push("Crie uma rotina de desaceleração 30 min antes do sono.");
+    if (analysis.parts.pSonoHoras < 15 || analysis.parts.pSonoQual < 8)
+      recs.push("Estabeleça horários regulares de sono.");
+    if (
+      formState.sobrecarga === "limite" ||
+      formState.sobrecarga === "esgotado"
+    )
+      recs.push("Reserve intervalos de recuperação mental durante o dia.");
+    if (
+      formState.desconforto === "moderado" ||
+      formState.desconforto === "intenso"
+    )
+      recs.push(
+        "Reveja sua ergonomia de trabalho e levante-se a cada 50 minutos.",
+      );
+    if (!recs.length)
+      recs.push("Mantenha o registro diário para fortalecer seu histórico.");
+    return recs.slice(0, 4);
+  }, [analysis.parts, formState]);
+
+  // Estrutura os cards principais de métricas do dashboard.
+  const metricCards = [
+    {
+      key: "tela",
+      title: "Tempo de tela",
+      value: analysis.raw.horasTela.toFixed(1),
+      unit: "h",
+      state: metricState("tela", analysis.raw.horasTela),
+      fill: Math.min(100, (analysis.raw.horasTela / 12) * 100),
+      caption: metricCaption("tela", analysis.raw.horasTela),
+    },
+    {
+      key: "pausas",
+      title: "Pausas reais",
+      value: analysis.raw.pausasAnalogicas,
+      unit: "pausas",
+      state: metricState("pausas", analysis.raw.pausasAnalogicas),
+      fill: Math.min(100, (analysis.raw.pausasAnalogicas / 6) * 100),
+      caption: metricCaption("pausas", analysis.raw.pausasAnalogicas),
+    },
+    {
+      key: "sono",
+      title: "Sono",
+      value: analysis.raw.horasSono.toFixed(1),
+      unit: "h",
+      state: metricState(
+        "sono",
+        analysis.parts.pSonoHoras + analysis.parts.pSonoQual,
+      ),
+      fill: ((analysis.parts.pSonoHoras + analysis.parts.pSonoQual) / 25) * 100,
+      caption: metricCaption("sono", analysis.raw.horasSono),
+    },
+    {
+      key: "sobrecarga",
+      title: "Sobrecarga",
+      value:
+        formState.sobrecarga === "tranquilo"
+          ? "Tranquilo"
+          : formState.sobrecarga === "controle"
+            ? "Sob controle"
+            : formState.sobrecarga === "limite"
+              ? "No limite"
+              : "Esgotado",
+      unit: "",
+      state: metricState("sobrecarga", formState.sobrecarga),
+      fill:
+        formState.sobrecarga === "tranquilo"
+          ? 100
+          : formState.sobrecarga === "controle"
+            ? 75
+            : formState.sobrecarga === "limite"
+              ? 35
+              : 10,
+      caption: metricCaption("sobrecarga", formState.sobrecarga),
+    },
+  ];
+
+  // Responsável por registrar um novo relatório.
+  // Aplica validações, calcula score e atualiza histórico.
+  const submitReport = async () => {
+    if (!reportAllowed) {
+      setStatus({
+        type: "error",
+        text: `Apenas um novo relatório a cada 16h. Próximo permitido em ${formatDateTime(nextAllowedAt.toISOString())}.`,
+      });
+      return;
     }
-    const top = recs.slice(0, 4);
-    const list = document.getElementById("recoList");
-    if (!list) return;
-    list.innerHTML = top
-      .map(
-        (r, i) =>
-          `<div class="reco-item"><div class="reco-item__num">${i + 1}</div><div>${r}</div></div>`,
-      )
-      .join("");
-  }
 
-  // Cria gráficos de linha (tendência) e radar (análise de componentes)
-  let trendChart = null;
-  let breakdownChart = null;
-  function buildCharts(history, parts, maxParts) {
-    const days = history.map((h) => h.day);
-    const scores = history.map((h) => h.score);
-    const trendCtx = document.getElementById("trendChart");
-    const breakdownCtx = document.getElementById("breakdownChart");
-    if (!trendCtx || !breakdownCtx || typeof Chart === "undefined") return;
-    const css = getComputedStyle(document.documentElement);
-    const cBalance = css.getPropertyValue("--vital").trim() || "#4DD4AC";
-    const cFatigue =
-      css.getPropertyValue("--accent-purple").trim() || "#FFB785";
-    const cBgBase = css.getPropertyValue("--bg-base").trim() || "#0B100F";
-    const cMuted = css.getPropertyValue("--text-muted").trim() || "#6E7773";
-    Chart.defaults.color = cMuted;
-    Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
-    Chart.defaults.borderColor = "rgba(255,255,255,0.06)";
-    if (trendChart) trendChart.destroy();
-    trendChart = new Chart(trendCtx, {
-      type: "line",
-      data: {
-        labels: days,
-        datasets: [
-          {
-            label: "Equilíbrio diário",
-            data: scores,
-            borderColor: cBalance,
-            borderWidth: 2.5,
-            tension: 0.4,
-            pointRadius: 4,
-            pointBackgroundColor: cBalance,
-            pointBorderColor: cBgBase,
-            pointBorderWidth: 2,
-            pointHoverRadius: 6,
-            fill: true,
-            backgroundColor: (ctx) => {
-              const chart = ctx.chart;
-              const { ctx: c, chartArea } = chart;
-              if (!chartArea) return null;
-              const grad = c.createLinearGradient(
-                0,
-                chartArea.top,
-                0,
-                chartArea.bottom,
-              );
-              grad.addColorStop(0, "rgba(77, 212, 172, 0.35)");
-              grad.addColorStop(1, "rgba(77, 212, 172, 0)");
-              return grad;
-            },
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "#1B2220",
-            borderColor: "#272F2C",
-            borderWidth: 1,
-            padding: 12,
-            titleFont: { size: 12, weight: "500" },
-            bodyFont: { size: 13 },
-            cornerRadius: 8,
-            displayColors: false,
-            callbacks: { label: (ctx) => `Equilíbrio: ${ctx.parsed.y}/100` },
-          },
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 100,
-            grid: { color: "rgba(255,255,255,0.04)" },
-            ticks: { stepSize: 25, font: { size: 11 } },
-          },
-          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-        },
-      },
-    });
-    if (breakdownChart) breakdownChart.destroy();
-    breakdownChart = new Chart(breakdownCtx, {
-      type: "radar",
-      data: {
-        labels: [
-          "Tela",
-          "Antes de dormir",
-          "Pausas",
-          "Horas de sono",
-          "Qualidade sono",
-          "Estado mental",
-        ],
-        datasets: [
-          {
-            label: "% do máximo",
-            data: [
-              (parts.pTela / maxParts.pTela) * 100,
-              (parts.pAntesDormir / maxParts.pAntesDormir) * 100,
-              (parts.pPausas / maxParts.pPausas) * 100,
-              (parts.pSonoHoras / maxParts.pSonoHoras) * 100,
-              (parts.pSonoQual / maxParts.pSonoQual) * 100,
-              (parts.pSobrecarga / maxParts.pSobrecarga) * 100,
-            ],
-            backgroundColor: "rgba(77,212,172,0.18)",
-            borderColor: cBalance,
-            borderWidth: 2,
-            pointBackgroundColor: cBalance,
-            pointBorderColor: cBgBase,
-            pointBorderWidth: 2,
-            pointRadius: 4,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "#1B2220",
-            borderColor: "#272F2C",
-            borderWidth: 1,
-            padding: 12,
-            cornerRadius: 8,
-            callbacks: {
-              label: (ctx) => `${ctx.label}: ${Math.round(ctx.parsed.r)}%`,
-            },
-          },
-        },
-        scales: {
-          r: {
-            beginAtZero: true,
-            max: 100,
-            angleLines: { color: "rgba(255,255,255,0.06)" },
-            grid: { color: "rgba(255,255,255,0.06)" },
-            pointLabels: {
-              font: {
-                size: 10,
-                weight: "500",
-                family: "'Inter', system-ui, sans-serif",
-              },
-              color: cMuted,
-            },
-            ticks: { display: false, stepSize: 25 },
-          },
-        },
-      },
-    });
-  }
-
-  // Insights helpers used in daily/cross analyses
-  const mean = (arr) =>
-    arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-  const desconfortoScale = { nenhum: 0, leve: 1, moderado: 2, intenso: 3 };
-  const disposicaoScale = {
-    muitoalta: 4,
-    alta: 3,
-    normal: 2,
-    baixa: 1,
-    muitobaixa: 0,
-  };
-  const qualidadeScale = {
-    muitoboa: 4,
-    boa: 3,
-    media: 2,
-    ruim: 1,
-    muitoruim: 0,
-  };
-  const sobrecargaScale = { tranquilo: 0, controle: 1, limite: 2, esgotado: 3 };
-
-  // Analisa correlação: mais tela = mais desconforto físico?
-  function insightTelaDesconforto(hist) {
-    const altaTela = hist.filter((h) => h.horasTela > 8);
-    const baixaTela = hist.filter((h) => h.horasTela <= 6);
-    if (altaTela.length < 2 || baixaTela.length < 2) return null;
-    const mAlta = mean(
-      altaTela.map((h) => desconfortoScale[h.desconforto] || 0),
-    );
-    const mBaixa = mean(
-      baixaTela.map((h) => desconfortoScale[h.desconforto] || 0),
-    );
-    if (mAlta - mBaixa >= 0.6)
-      return {
-        level: "warn",
-        icon: "⌨",
-        title: "Tela × desconforto físico",
-        msg: "Você tende a sentir mais desconforto físico em dias acima de 8 horas de tela. Considere alongamentos a cada 60-90 minutos e ajustes ergonômicos.",
-        tag: "Cruzamento",
-      };
-    return null;
-  }
-  // Analisa correlação: telas antes de dormir = pior qualidade do sono?
-  function insightTelaAntesSono(hist) {
-    const comTela = hist.filter((h) => h.telasAntesDormir === "sim");
-    const semTela = hist.filter((h) => h.telasAntesDormir === "nao");
-    if (comTela.length < 2 || semTela.length < 2) return null;
-    const mCom = mean(comTela.map((h) => qualidadeScale[h.qualidadeSono] || 2));
-    const mSem = mean(semTela.map((h) => qualidadeScale[h.qualidadeSono] || 2));
-    if (mSem - mCom >= 0.5)
-      return {
-        level: "info",
-        icon: "🌙",
-        title: "Telas antes de dormir × qualidade do sono",
-        msg: "Nos dias em que você evita telas antes de dormir, sua qualidade de sono tende a melhorar.",
-        tag: "Cruzamento",
-      };
-    return null;
-  }
-  // Analisa correlação: mais sono = mais disposição?
-  function insightSonoDisposicao(hist) {
-    const longo = hist.filter((h) => h.horasSono >= 7);
-    const curto = hist.filter((h) => h.horasSono < 6);
-    if (longo.length < 2 || curto.length < 2) return null;
-    const mLongo = mean(longo.map((h) => disposicaoScale[h.disposicao] || 2));
-    const mCurto = mean(curto.map((h) => disposicaoScale[h.disposicao] || 2));
-    if (mLongo - mCurto >= 0.6)
-      return {
-        level: "ok",
-        icon: "☀",
-        title: "Sono × disposição",
-        msg: "Sua disposição costuma ser maior em dias com mais de 7 horas de sono. A consistência do horário de dormir potencializa esse efeito.",
-        tag: "Cruzamento",
-      };
-    return null;
-  }
-  // Analisa correlação: mais pausas analógicas = menos sobrecarga?
-  function insightPausaSobrecarga(hist) {
-    const altaAnalog = hist.filter(
-      (h) => (h.pausasAnalogicas || 0) > (h.pausasDigitais || 0),
-    );
-    const altaDigital = hist.filter(
-      (h) => (h.pausasDigitais || 0) > (h.pausasAnalogicas || 0),
-    );
-    if (altaAnalog.length < 2 || altaDigital.length < 2) return null;
-    const mAna = mean(
-      altaAnalog.map((h) => sobrecargaScale[h.sobrecarga] || 1),
-    );
-    const mDig = mean(
-      altaDigital.map((h) => sobrecargaScale[h.sobrecarga] || 1),
-    );
-    if (mDig - mAna >= 0.5)
-      return {
-        level: "info",
-        icon: "⏸",
-        title: "Pausas analógicas × sobrecarga",
-        msg: "Nos dias com mais pausas fora das telas, você tende a terminar o dia menos sobrecarregado.",
-        tag: "Cruzamento",
-      };
-    return null;
-  }
-  // Detecta padrão: 3+ dias consecutivos em "limite" ou "esgotado"?
-  function insightTendenciaSobrecarga(hist) {
-    const recents = hist.slice(-5);
-    const heavy = recents.filter(
-      (h) => h.sobrecarga === "limite" || h.sobrecarga === "esgotado",
-    );
-    if (heavy.length >= 3)
-      return {
-        level: "bad",
-        icon: "⚠",
-        title: "Tendência semanal de sobrecarga",
-        msg: `Você registrou estado "no limite" ou "esgotado" em ${heavy.length} dos últimos ${recents.length} dias. Esse padrão prolongado merece atenção e descanso real.`,
-        tag: "Alerta preventivo",
-      };
-    return null;
-  }
-
-  // Gera alertas baseados apenas no registro de hoje
-  function dailyInsights(d, parts, maxParts) {
-    const out = [];
-    if (parts.pTela <= 10) {
-      out.push({
-        level: d.horasTela > 8 ? "bad" : "warn",
-        icon: "⌨",
-        title: "Exposição digital elevada",
-        msg: `Você passou ${d.horasTela.toFixed(1)} horas em frente a telas hoje. Exposições acima de 8h estão associadas a fadiga visual.`,
-        tag: "Hoje",
-      });
-    }
-    if (d.telasAntesDormir === "sim")
-      out.push({
-        level: "info",
-        icon: "🌙",
-        title: "Tela na última hora antes de dormir",
-        msg: "A luz azul e o conteúdo estimulante atrasam a produção de melatonina.",
-        tag: "Hoje",
-      });
-    if (parts.pPausas <= 8)
-      out.push({
-        level: d.pausasAnalogicas === 0 ? "bad" : "warn",
-        icon: "⏸",
-        title: "Pausas analógicas insuficientes",
-        msg: `Apenas ${d.pausasAnalogicas} pausa(s) fora das telas hoje.`,
-        tag: "Hoje",
-      });
-    if (parts.pSonoHoras + parts.pSonoQual <= 12)
-      out.push({
-        level: d.horasSono < 6 ? "bad" : "warn",
-        icon: "😴",
-        title: "Recuperação incompleta",
-        msg: `Você dormiu ${d.horasSono.toFixed(1)}h com qualidade ${{ muitoboa: "muito boa", boa: "boa", media: "média", ruim: "ruim", muitoruim: "muito ruim" }[d.qualidadeSono]}.`,
-        tag: "Hoje",
-      });
-    if (d.sobrecarga === "limite" || d.sobrecarga === "esgotado")
-      out.push({
-        level: d.sobrecarga === "esgotado" ? "bad" : "warn",
-        icon: "⚡",
-        title: "Estado mental sob pressão",
-        msg: `Você registrou "${sobrecargaLabel(d.sobrecarga).toLowerCase()}" hoje. Respiração consciente ajuda.`,
-        tag: "Hoje",
-      });
-    if (d.desconforto === "moderado" || d.desconforto === "intenso")
-      out.push({
-        level: d.desconforto === "intenso" ? "bad" : "warn",
-        icon: "🦴",
-        title: "Desconforto físico relevante",
-        msg: "Tensão muscular costuma acompanhar dias de tela longa.",
-        tag: "Hoje",
-      });
-    return out;
-  }
-
-  // Combina insights de hoje + análises cruzadas do histórico (se ≥7 dias)
-  function buildInsights(d, parts, maxParts, hist) {
-    const insights = dailyInsights(d, parts, maxParts);
-    if (hist.length >= 7) {
-      [
-        insightTelaDesconforto,
-        insightTelaAntesSono,
-        insightSonoDisposicao,
-        insightPausaSobrecarga,
-        insightTendenciaSobrecarga,
-      ].forEach((fn) => {
-        const r = fn(hist);
-        if (r) insights.push(r);
-      });
-    }
-    if (insights.length === 0)
-      insights.push({
-        level: "ok",
-        icon: "✓",
-        title: "Dia equilibrado",
-        msg: "Seus indicadores estão saudáveis. Mantenha o registro diário.",
-        tag: "Status",
-      });
-    return insights;
-  }
-
-  // Orquestra toda a análise: calcula score, atualiza histórico, gera tudo (gráficos, alertas, recos)
-  function analyze() {
-    const d = {
-      horasTela: Number(horasTela),
-      telasAntesDormir,
-      pausasAnalogicas: Number(pausasAnalogicas),
-      pausasDigitais: Number(pausasDigitais),
-      horasSono: Number(horasSono),
-      qualidadeSono,
-      sobrecarga,
-      disposicao,
-      atividade,
-      desconforto,
+    const record = {
+      id: `report_${Date.now()}`,
+      userId: "user_001",
+      reportedAt: new Date().toISOString(),
+      ...formState,
     };
-    const result = scoreBalance(d);
-    const equilibrio = result.score;
-    const desgaste = 100 - equilibrio;
-    const b = band(equilibrio);
-    const hero = document.getElementById("riskHero");
-    if (hero) hero.dataset.band = b;
-    const status = document.getElementById("riskStatus");
-    if (status) status.textContent = BAND_INFO[b].label;
-    const msg = document.getElementById("riskMessage");
-    if (msg) msg.textContent = BAND_INFO[b].desc;
-    const bal = document.getElementById("balanceVal");
-    if (bal) bal.textContent = equilibrio;
-    const fat = document.getElementById("fatigueVal");
-    if (fat) fat.textContent = desgaste;
-    updateGauge(equilibrio);
-    updateMetrics(d, result.parts, result.maxParts);
-    const hist = pushHistory(equilibrio, d);
-    const insights = buildInsights(d, result.parts, result.maxParts, hist);
-    renderAlerts(insights);
-    generateRecommendations(d, result.parts);
-    buildCharts(hist, result.parts, result.maxParts);
-    const t = new Date();
-    const tStr = `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`;
-    const pill = document.getElementById("lastUpdate");
-    if (pill) pill.textContent = `Última análise · ${tStr}`;
+    record.score = scoreBalance(record).score;
+
+    setStatus({ type: "pending", text: "Registrando relatório..." });
+    const updated = await mockDatabase.saveReport(record);
+    setHistory(updated);
+    setStatus({ type: "success", text: "Relatório registrado com sucesso." });
+  };
+
+  // Estado visual exibido enquanto os dados são carregados.
+  if (loading) {
+    return (
+      <main className="dashboard-shell">
+        <div className="loading-state">Carregando painel...</div>
+      </main>
+    );
   }
-
-  useEffect(() => {
-    // initial run after mount
-    const id = setTimeout(() => {
-      analyze();
-    }, 120);
-    return () => clearTimeout(id);
-  }, []);
-
-  // resize charts
-  useEffect(() => {
-    let resizeTimer;
-    function onResize() {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        if (window.trendChart)
-          window.trendChart.resize && window.trendChart.resize();
-      }, 150);
-    }
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
 
   return (
-    <>
-      <main className="dashboard-shell">
-        <div className="dash-head">
-          <div className="dash-head__left">
-            <h1>Painel de equilíbrio digital</h1>
-            <p>
-              Registre os indicadores da sua rotina digital à esquerda. Seu
-              Score de Equilíbrio e a análise comportamental atualizam em tempo
-              real.
-            </p>
-          </div>
+    <main className="dashboard-shell">
+      <div className="dash-head">
+        <div>
+          <h1>Painel de equilíbrio digital</h1>
+          <p>
+            Registre sua rotina digital com dados reais. O painel organiza
+            Score, recomendações e sinais comportamentais, preparado para
+            integração com backend.
+          </p>
         </div>
+        <div className="dash-pill-group">
+          <span className="dash-pill">
+            Histórico: {sortedHistory.length} dias
+          </span>
+          <span className="dash-pill">
+            Análises completas: {enoughHistory ? "Sim" : "Não"}
+          </span>
+          <span className="dash-pill">
+            Último relatório:{" "}
+            {latestReport ? formatDateTime(latestReport.reportedAt) : "Nenhum"}
+          </span>
+        </div>
+      </div>
 
-        {/* ===== Two-column layout ===== */}
-        <div className="dash-grid">
-          {/* ===== LEFT: Form ===== */}
-          <aside className="form-panel">
-            <h2>Registro do dia</h2>
-            <p className="form-panel__sub">
-              Responda sobre sua rotina e clique em Analisar.
-            </p>
+      <div className="dash-grid">
+        <aside className="form-panel">
+          <h2>Registro de hoje</h2>
+          <p className="form-panel__sub">
+            Dados de rotina são a base para uma análise consistente. Atualize o
+            painel quando precisar.
+          </p>
 
-            {/* ROTINA DIGITAL */}
-            <div className="form-group">
-              <div className="form-group__label">Rotina digital</div>
-
-              <div className="field">
-                <div className="field__row">
-                  <label htmlFor="horasTela">Horas de tela hoje</label>
-                  <span className="field__val" data-out="horasTela">
-                    {horasTela}
-                  </span>
-                </div>
-                <input
-                  type="number"
-                  id="horasTela"
-                  min={0}
-                  max={14}
-                  step={0.5}
-                  value={horasTela}
-                  onChange={(e) => setHorasTela(Number(e.target.value))}
-                />
-              </div>
-
-              <div className="field">
-                <label style={{ display: "block", marginBottom: "0.6rem" }}>
-                  Usou telas na última hora antes de dormir?
-                </label>
-                <div className="toggle-grid" data-group="telasAntesDormir">
-                  <button
-                    type="button"
-                    className={`toggle-btn ${telasAntesDormir === "sim" ? "active" : ""}`}
-                    onClick={() => setTelasAntesDormir("sim")}
-                  >
-                    Sim
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${telasAntesDormir === "nao" ? "active" : ""}`}
-                    onClick={() => setTelasAntesDormir("nao")}
-                  >
-                    Não
-                  </button>
-                </div>
-              </div>
+          <div className="field">
+            <div className="field__row">
+              <label htmlFor="horasTela">Horas de tela</label>
+              <span>{formState.horasTela}</span>
             </div>
+            <input
+              id="horasTela"
+              type="number"
+              min={0}
+              max={14}
+              step={0.5}
+              value={formState.horasTela}
+              onChange={(event) =>
+                dispatch({
+                  type: "SET_FIELD",
+                  field: "horasTela",
+                  value: Number(event.target.value),
+                })
+              }
+            />
+          </div>
 
-            {/* PAUSAS */}
-            <div className="form-group">
-              <div className="form-group__label">Pausas durante o dia</div>
-
-              <div className="field">
-                <div className="field__row">
-                  <label htmlFor="pausasAnalogicas">
-                    Pausas fora das telas
-                  </label>
-                  <span className="field__val" data-out="pausasAnalogicas">
-                    {pausasAnalogicas}
-                  </span>
-                </div>
-                <input
-                  type="number"
-                  id="pausasAnalogicas"
-                  min={0}
-                  max={10}
-                  step={1}
-                  value={pausasAnalogicas}
-                  onChange={(e) => setPausasAnalogicas(Number(e.target.value))}
-                />
-              </div>
-
-              <div className="field">
-                <div className="field__row">
-                  <label htmlFor="pausasDigitais">
-                    Pausas com celular / redes
-                  </label>
-                  <span className="field__val" data-out="pausasDigitais">
-                    {pausasDigitais}
-                  </span>
-                </div>
-                <input
-                  type="number"
-                  id="pausasDigitais"
-                  min={0}
-                  max={10}
-                  step={1}
-                  value={pausasDigitais}
-                  onChange={(e) => setPausasDigitais(Number(e.target.value))}
-                />
-              </div>
+          <div className="field">
+            <p>Usou telas na última hora antes de dormir?</p>
+            <div className="toggle-grid">
+              {[
+                { value: "sim", label: "Sim" },
+                { value: "nao", label: "Não" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`toggle-btn ${formState.telasAntesDormir === option.value ? "active" : ""}`}
+                  onClick={() =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: "telasAntesDormir",
+                      value: option.value,
+                    })
+                  }
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* SONO */}
-            <div className="form-group">
-              <div className="form-group__label">Sono e recuperação</div>
-
-              <div className="field">
-                <div className="field__row">
-                  <label htmlFor="horasSono">Horas dormidas</label>
-                  <span className="field__val" data-out="horasSono">
-                    {horasSono}
-                  </span>
-                </div>
-                <input
-                  type="number"
-                  id="horasSono"
-                  min={0}
-                  max={12}
-                  step={0.5}
-                  value={horasSono}
-                  onChange={(e) => setHorasSono(Number(e.target.value))}
-                />
-              </div>
-
-              <div className="field">
-                <label style={{ display: "block", marginBottom: "0.6rem" }}>
-                  Qualidade do sono
-                </label>
-                <div
-                  className="toggle-grid toggle-grid--5"
-                  data-group="qualidadeSono"
-                >
-                  <button
-                    type="button"
-                    className={`toggle-btn ${qualidadeSono === "muitoboa" ? "active" : ""}`}
-                    onClick={() => setQualidadeSono("muitoboa")}
-                  >
-                    Muito boa
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${qualidadeSono === "boa" ? "active" : ""}`}
-                    onClick={() => setQualidadeSono("boa")}
-                  >
-                    Boa
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${qualidadeSono === "media" ? "active" : ""}`}
-                    onClick={() => setQualidadeSono("media")}
-                  >
-                    Média
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${qualidadeSono === "ruim" ? "active" : ""}`}
-                    onClick={() => setQualidadeSono("ruim")}
-                  >
-                    Ruim
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${qualidadeSono === "muitoruim" ? "active" : ""}`}
-                    onClick={() => setQualidadeSono("muitoruim")}
-                  >
-                    Muito ruim
-                  </button>
-                </div>
-              </div>
+          <div className="field">
+            <div className="field__row">
+              <label htmlFor="pausasAnalogicas">Pausas fora da tela</label>
+              <span>{formState.pausasAnalogicas}</span>
             </div>
+            <input
+              id="pausasAnalogicas"
+              type="number"
+              min={0}
+              max={10}
+              step={1}
+              value={formState.pausasAnalogicas}
+              onChange={(event) =>
+                dispatch({
+                  type: "SET_FIELD",
+                  field: "pausasAnalogicas",
+                  value: Number(event.target.value),
+                })
+              }
+            />
+          </div>
 
-            {/* ESTADO MENTAL */}
-            <div className="form-group">
-              <div className="form-group__label">Estado mental</div>
-
-              <div className="field">
-                <label style={{ display: "block", marginBottom: "0.6rem" }}>
-                  Em qual nível você se sentiu mentalmente?
-                </label>
-                <div
-                  className="toggle-grid toggle-grid--4"
-                  data-group="sobrecarga"
-                >
-                  <button
-                    type="button"
-                    className={`toggle-btn ${sobrecarga === "tranquilo" ? "active" : ""}`}
-                    onClick={() => setSobrecarga("tranquilo")}
-                  >
-                    Tranquilo
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${sobrecarga === "controle" ? "active" : ""}`}
-                    onClick={() => setSobrecarga("controle")}
-                  >
-                    Sob controle
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${sobrecarga === "limite" ? "active" : ""}`}
-                    onClick={() => setSobrecarga("limite")}
-                  >
-                    No limite
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${sobrecarga === "esgotado" ? "active" : ""}`}
-                    onClick={() => setSobrecarga("esgotado")}
-                  >
-                    Esgotado
-                  </button>
-                </div>
-              </div>
+          <div className="field">
+            <div className="field__row">
+              <label htmlFor="pausasDigitais">Pausas com celular</label>
+              <span>{formState.pausasDigitais}</span>
             </div>
+            <input
+              id="pausasDigitais"
+              type="number"
+              min={0}
+              max={10}
+              step={1}
+              value={formState.pausasDigitais}
+              onChange={(event) =>
+                dispatch({
+                  type: "SET_FIELD",
+                  field: "pausasDigitais",
+                  value: Number(event.target.value),
+                })
+              }
+            />
+          </div>
 
-            {/* COMPLEMENTAR */}
-            <div className="form-group">
-              <div className="form-group__label">Dados complementares</div>
-
-              <div className="field">
-                <label style={{ display: "block", marginBottom: "0.6rem" }}>
-                  Disposição hoje
-                </label>
-                <div
-                  className="toggle-grid toggle-grid--5"
-                  data-group="disposicao"
-                >
-                  <button
-                    type="button"
-                    className={`toggle-btn ${disposicao === "muitoalta" ? "active" : ""}`}
-                    onClick={() => setDisposicao("muitoalta")}
-                  >
-                    Muito alta
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${disposicao === "alta" ? "active" : ""}`}
-                    onClick={() => setDisposicao("alta")}
-                  >
-                    Alta
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${disposicao === "normal" ? "active" : ""}`}
-                    onClick={() => setDisposicao("normal")}
-                  >
-                    Normal
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${disposicao === "baixa" ? "active" : ""}`}
-                    onClick={() => setDisposicao("baixa")}
-                  >
-                    Baixa
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${disposicao === "muitobaixa" ? "active" : ""}`}
-                    onClick={() => setDisposicao("muitobaixa")}
-                  >
-                    Muito baixa
-                  </button>
-                </div>
-              </div>
-
-              <div className="field">
-                <label style={{ display: "block", marginBottom: "0.6rem" }}>
-                  Atividade física
-                </label>
-                <div
-                  className="toggle-grid toggle-grid--4"
-                  data-group="atividade"
-                >
-                  <button
-                    type="button"
-                    className={`toggle-btn ${atividade === "mais1h" ? "active" : ""}`}
-                    onClick={() => setAtividade("mais1h")}
-                  >
-                    Mais de 1h
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${atividade === "30a60" ? "active" : ""}`}
-                    onClick={() => setAtividade("30a60")}
-                  >
-                    30–60 min
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${atividade === "ate30" ? "active" : ""}`}
-                    onClick={() => setAtividade("ate30")}
-                  >
-                    Até 30 min
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${atividade === "nenhuma" ? "active" : ""}`}
-                    onClick={() => setAtividade("nenhuma")}
-                  >
-                    Não pratiquei
-                  </button>
-                </div>
-              </div>
-
-              <div className="field">
-                <label style={{ display: "block", marginBottom: "0.6rem" }}>
-                  Desconforto físico
-                </label>
-                <div
-                  className="toggle-grid toggle-grid--4"
-                  data-group="desconforto"
-                >
-                  <button
-                    type="button"
-                    className={`toggle-btn ${desconforto === "nenhum" ? "active" : ""}`}
-                    onClick={() => setDesconforto("nenhum")}
-                  >
-                    Nenhum
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${desconforto === "leve" ? "active" : ""}`}
-                    onClick={() => setDesconforto("leve")}
-                  >
-                    Leve
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${desconforto === "moderado" ? "active" : ""}`}
-                    onClick={() => setDesconforto("moderado")}
-                  >
-                    Moderado
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${desconforto === "intenso" ? "active" : ""}`}
-                    onClick={() => setDesconforto("intenso")}
-                  >
-                    Intenso
-                  </button>
-                </div>
-              </div>
+          <div className="field">
+            <div className="field__row">
+              <label htmlFor="horasSono">Horas dormidas</label>
+              <span>{formState.horasSono}</span>
             </div>
-            <button
-              id="analyzeBtn"
-              className="btn btn--analyze"
-              onClick={analyze}
+            <input
+              id="horasSono"
+              type="number"
+              min={0}
+              max={12}
+              step={0.5}
+              value={formState.horasSono}
+              onChange={(event) =>
+                dispatch({
+                  type: "SET_FIELD",
+                  field: "horasSono",
+                  value: Number(event.target.value),
+                })
+              }
+            />
+          </div>
+
+          <div className="field">
+            <p>Qualidade do sono</p>
+            <div className="toggle-grid toggle-grid--5">
+              {[
+                { value: "muitoboa", label: "Muito boa" },
+                { value: "boa", label: "Boa" },
+                { value: "media", label: "Média" },
+                { value: "ruim", label: "Ruim" },
+                { value: "muitoruim", label: "Muito ruim" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`toggle-btn ${formState.qualidadeSono === option.value ? "active" : ""}`}
+                  onClick={() =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: "qualidadeSono",
+                      value: option.value,
+                    })
+                  }
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="field">
+            <p>Estado mental</p>
+            <div className="toggle-grid toggle-grid--4">
+              {[
+                { value: "tranquilo", label: "Tranquilo" },
+                { value: "controle", label: "Sob controle" },
+                { value: "limite", label: "No limite" },
+                { value: "esgotado", label: "Esgotado" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`toggle-btn ${formState.sobrecarga === option.value ? "active" : ""}`}
+                  onClick={() =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: "sobrecarga",
+                      value: option.value,
+                    })
+                  }
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="field">
+            <p>Disposição</p>
+            <div className="toggle-grid toggle-grid--5">
+              {[
+                { value: "muitoalta", label: "Muito alta" },
+                { value: "alta", label: "Alta" },
+                { value: "normal", label: "Normal" },
+                { value: "baixa", label: "Baixa" },
+                { value: "muitobaixa", label: "Muito baixa" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`toggle-btn ${formState.disposicao === option.value ? "active" : ""}`}
+                  onClick={() =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: "disposicao",
+                      value: option.value,
+                    })
+                  }
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="field">
+            <p>Atividade física</p>
+            <div className="toggle-grid toggle-grid--4">
+              {[
+                { value: "mais1h", label: "Mais de 1h" },
+                { value: "30a60", label: "30–60 min" },
+                { value: "ate30", label: "Até 30 min" },
+                { value: "nenhuma", label: "Não pratiquei" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`toggle-btn ${formState.atividade === option.value ? "active" : ""}`}
+                  onClick={() =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: "atividade",
+                      value: option.value,
+                    })
+                  }
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="field">
+            <p>Desconforto físico</p>
+            <div className="toggle-grid toggle-grid--4">
+              {[
+                { value: "nenhum", label: "Nenhum" },
+                { value: "leve", label: "Leve" },
+                { value: "moderado", label: "Moderado" },
+                { value: "intenso", label: "Intenso" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`toggle-btn ${formState.desconforto === option.value ? "active" : ""}`}
+                  onClick={() =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: "desconforto",
+                      value: option.value,
+                    })
+                  }
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            className="btn btn--primary"
+            type="button"
+            onClick={submitReport}
+          >
+            Analisar meu dia
+            <span className="btn__arrow">→</span>
+          </button>
+
+          {status.type !== "idle" && (
+            <div
+              className={`alert ${status.type === "error" ? "alert--bad" : status.type === "pending" ? "alert--info" : "alert--warn"}`}
             >
-              Analisar meu dia
-              <svg
-                className="btn__arrow"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-              >
-                <path d="M5 12h14M13 5l7 7-7 7" />
+              <div className="alert__icon">i</div>
+              <div className="alert__body">
+                <div className="alert__title">Status</div>
+                <p className="alert__msg">{status.text}</p>
+              </div>
+            </div>
+          )}
+        </aside>
+
+        <section className="dash-panel">
+          <div className={`risk-hero risk-hero--${band}`}>
+            <div>
+              <span className="risk-status">{BAND_INFO[band].label}</span>
+              <h2>Seu Score de Equilíbrio Digital</h2>
+              <p>{BAND_INFO[band].desc}</p>
+            </div>
+            <div className="gauge">
+              <svg viewBox="0 0 200 200" aria-hidden="true">
+                <circle className="gauge__track" cx="100" cy="100" r="84" />
+                <circle
+                  className="gauge__fill"
+                  cx="100"
+                  cy="100"
+                  r="84"
+                  strokeDasharray={2 * Math.PI * 84}
+                  strokeDashoffset={
+                    2 * Math.PI * 84 * (1 - analysis.score / 100)
+                  }
+                />
               </svg>
-            </button>
-          </aside>
-
-          {/* ===== RIGHT: Dashboard panels ===== */}
-          <div className="dash-panel">
-            <div className="risk-hero" id="riskHero" data-band="equilibrada">
-              <div className="risk-hero__inner">
-                <div>
-                  <span className="risk-status" id="riskStatus">
-                    Rotina equilibrada
-                  </span>
-                  <h2>Seu Score de Equilíbrio Digital</h2>
-                  <p id="riskMessage">
-                    Seus indicadores estão dentro de faixas saudáveis. Continue
-                    o monitoramento.
-                  </p>
-
-                  <div className="dual-score">
-                    <div className="dual-score__item">
-                      <span className="dual-score__label">Equilíbrio</span>
-                      <span className="dual-score__val" id="balanceVal">
-                        —
-                      </span>
-                    </div>
-                    <div className="dual-score__divider"></div>
-                    <div className="dual-score__item">
-                      <span className="dual-score__label">Desgaste</span>
-                      <span
-                        className="dual-score__val dual-score__val--fatigue"
-                        id="fatigueVal"
-                      >
-                        —
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="gauge">
-                  <svg viewBox="0 0 200 200">
-                    <circle className="gauge__track" cx="100" cy="100" r="84" />
-                    <circle
-                      id="gaugeFill"
-                      className="gauge__fill"
-                      cx="100"
-                      cy="100"
-                      r="84"
-                      strokeDasharray="528"
-                      strokeDashoffset="528"
-                    />
-                  </svg>
-                  <div className="gauge__value">
-                    <div className="gauge__num" id="gaugeNum">
-                      —
-                    </div>
-                    <div className="gauge__lbl">Equilíbrio / 100</div>
-                  </div>
-                </div>
+              <div className="gauge__value">
+                <div className="gauge__num">{analysis.score}</div>
+                <div className="gauge__lbl">Equilíbrio / 100</div>
               </div>
-            </div>
-
-            <div className="metric-grid">
-              <div className="metric" id="metricTela" data-state="ok">
-                <div className="metric__head">
-                  <span className="metric__title">Tempo de tela</span>
-                  <span className="metric__icon">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                    >
-                      <rect x="2" y="3" width="20" height="14" rx="2" />
-                      <path d="M8 21h8M12 17v4" />
-                    </svg>
-                  </span>
-                </div>
-                <div className="metric__num">
-                  <span className="metric__num-val">—</span>
-                  <small className="metric__num-unit"></small>
-                </div>
-                <div className="metric__bar">
-                  <div
-                    className="metric__bar-fill"
-                    style={{ width: "0%" }}
-                  ></div>
-                </div>
-                <div className="metric__caption">—</div>
-              </div>
-
-              <div className="metric" id="metricPausas" data-state="ok">
-                <div className="metric__head">
-                  <span className="metric__title">Pausas reais</span>
-                  <span className="metric__icon">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 8v4l3 2" />
-                    </svg>
-                  </span>
-                </div>
-                <div className="metric__num">
-                  <span className="metric__num-val">—</span>
-                  <small className="metric__num-unit"></small>
-                </div>
-                <div className="metric__bar">
-                  <div
-                    className="metric__bar-fill"
-                    style={{ width: "0%" }}
-                  ></div>
-                </div>
-                <div className="metric__caption">—</div>
-              </div>
-
-              <div className="metric" id="metricSono" data-state="ok">
-                <div className="metric__head">
-                  <span className="metric__title">Sono</span>
-                  <span className="metric__icon">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                    >
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
-                  </span>
-                </div>
-                <div className="metric__num">
-                  <span className="metric__num-val">—</span>
-                  <small className="metric__num-unit"></small>
-                </div>
-                <div className="metric__bar">
-                  <div
-                    className="metric__bar-fill"
-                    style={{ width: "0%" }}
-                  ></div>
-                </div>
-                <div className="metric__caption">—</div>
-              </div>
-
-              <div className="metric" id="metricSobrecarga" data-state="ok">
-                <div className="metric__head">
-                  <span className="metric__title">Sobrecarga</span>
-                  <span className="metric__icon">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                    >
-                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                    </svg>
-                  </span>
-                </div>
-                <div className="metric__num">
-                  <span className="metric__num-val">—</span>
-                  <small className="metric__num-unit"></small>
-                </div>
-                <div className="metric__bar">
-                  <div
-                    className="metric__bar-fill"
-                    style={{ width: "0%" }}
-                  ></div>
-                </div>
-                <div className="metric__caption">—</div>
-              </div>
-            </div>
-
-            <div className="charts-grid">
-              <div className="chart-card">
-                <div className="chart-card__head">
-                  <div>
-                    <h3>Tendência semanal</h3>
-                    <p>Score de Equilíbrio Digital, últimos 7 dias</p>
-                  </div>
-                  <div className="chart-card__legend">
-                    <span
-                      className="legend-dot"
-                      style={{ "--swatch": "var(--vital)" }}
-                    >
-                      Equilíbrio
-                    </span>
-                  </div>
-                </div>
-                <div className="chart-canvas">
-                  <canvas id="trendChart"></canvas>
-                </div>
-              </div>
-
-              <div className="chart-card">
-                <div className="chart-card__head">
-                  <div>
-                    <h3>Por dimensão</h3>
-                    <p>Pontuação obtida × máxima</p>
-                  </div>
-                </div>
-                <div className="chart-canvas chart-canvas--small">
-                  <canvas id="breakdownChart"></canvas>
-                </div>
-              </div>
-            </div>
-
-            <div className="alerts">
-              <div className="alerts__head">
-                <h3>Análise comportamental</h3>
-                <span className="alerts__count" id="alertCount">
-                  — sinais
-                </span>
-              </div>
-              <p className="alerts__note" id="alertsNote">
-                Insights cruzam seu histórico. Análises personalizadas aparecem
-                a partir de 7 dias de uso.
-              </p>
-              <div className="alert-list" id="alertList"></div>
-            </div>
-
-            <div className="reco">
-              <h3>Recomendações para os próximos 7 dias</h3>
-              <div className="reco-list" id="recoList"></div>
-            </div>
-
-            <div className="disclaimer">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 16v-4M12 8h.01" />
-              </svg>
-              <p>
-                O Wellbe-in não realiza diagnósticos médicos. Seu objetivo é
-                identificar padrões associados ao desgaste digital e incentivar
-                hábitos mais saudáveis.
-              </p>
             </div>
           </div>
-        </div>
-      </main>
-    </>
+
+          <div className="metric-grid">
+            {metricCards.map((metric) => (
+              <article
+                className="metric"
+                key={metric.key}
+                data-state={metric.state}
+              >
+                <div className="metric__head">
+                  <span className="metric__title">{metric.title}</span>
+                  <span className="metric__state">{metric.state}</span>
+                </div>
+                <div className="metric__num">
+                  <strong>{metric.value}</strong>
+                  <small>{metric.unit}</small>
+                </div>
+                <div className="metric__bar">
+                  <div
+                    className="metric__bar-fill"
+                    style={{ width: `${metric.fill}%` }}
+                  />
+                </div>
+                <p className="metric__caption">{metric.caption}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="charts-grid">
+            <div className="chart-card">
+              <div className="chart-card__head">
+                <div>
+                  <h3>Tendência semanal</h3>
+                  <p>Score de equilíbrio dos últimos 7 dias</p>
+                </div>
+              </div>
+              <div className="chart-canvas">
+                <TrendChart points={trendData} />
+              </div>
+            </div>
+            <div className="chart-card">
+              <div className="chart-card__head">
+                <div>
+                  <h3>Análise por dimensão</h3>
+                  <p>Percentual do máximo atual</p>
+                </div>
+              </div>
+              <div className="chart-canvas chart-canvas--small">
+                <RadarChart ratios={radarRatios} />
+              </div>
+            </div>
+          </div>
+
+          <div className="alerts-section">
+            <div className="alerts__head">
+              <h3>Análises comportamentais</h3>
+              <span>{behavioralInsights.length} sinais</span>
+            </div>
+            <p className="alerts__note">
+              {enoughHistory
+                ? "Insights cruzam seu histórico completo."
+                : `Registre 7 dias para análises avançadas. Atualmente: ${sortedHistory.length}.`}
+            </p>
+            <div className="alert-list">
+              {behavioralInsights.map((item, index) => (
+                <div
+                  className={`alert ${item.level === "bad" ? "alert--bad" : item.level === "warn" ? "alert--warn" : "alert--info"}`}
+                  key={index}
+                >
+                  <div className="alert__icon">{item.icon}</div>
+                  <div className="alert__body">
+                    <strong className="alert__title">{item.title}</strong>
+                    <p className="alert__msg">{item.msg}</p>
+                    <span className="alert__tag">{item.tag}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="recommendations">
+            <h3>Recomendações práticas</h3>
+            <div className="reco-list">
+              {recommendations.map((item, index) => (
+                <div className="reco-item" key={index}>
+                  <span>{index + 1}</span>
+                  <p>{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="disclaimer">
+            <span>i</span>
+            <p>
+              O painel está arquitetado para conexão com backend e gravação de
+              histórico persistente. Não substitui avaliação profissional.
+            </p>
+          </div>
+        </section>
+      </div>
+    </main>
   );
-};
+}
+
+function TrendChart({ points }) {
+  const width = 520;
+  const height = 220;
+  const padding = 24;
+  const maxScore = 100;
+  const step =
+    points.length > 1 ? (width - padding * 2) / (points.length - 1) : 0;
+
+  const path = points
+    .map((point, index) => {
+      const x = padding + index * step;
+      const y =
+        height - padding - (point.score / maxScore) * (height - padding * 2);
+      return `${index === 0 ? "M" : "L"} ${x} ${y}`;
+    })
+    .join(" ");
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      aria-label="Gráfico de tendência"
+      role="img"
+    >
+      <path
+        d={path}
+        fill="none"
+        stroke="var(--vital)"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      {points.map((point, index) => {
+        const x = padding + index * step;
+        const y =
+          height - padding - (point.score / maxScore) * (height - padding * 2);
+        return (
+          <circle key={point.label} cx={x} cy={y} r="4" fill="var(--vital)" />
+        );
+      })}
+      {points.map((point, index) => {
+        const x = padding + index * step;
+        return (
+          <text
+            key={`lbl-${index}`}
+            x={x}
+            y={height - padding + 18}
+            textAnchor="middle"
+            fontSize="10"
+            fill="var(--text-muted)"
+          >
+            {point.label}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
+function RadarChart({ ratios }) {
+  const size = 260;
+  const center = size / 2;
+  const radius = 92;
+  const labels = ["Tela", "Antes", "Pausas", "Sono", "Qualidade", "Mental"];
+  const points = ratios.map((ratio, index) => {
+    const angle = (Math.PI * 2 * index) / ratios.length - Math.PI / 2;
+    return {
+      x: center + (Math.cos(angle) * (radius * ratio)) / 100,
+      y: center + (Math.sin(angle) * (radius * ratio)) / 100,
+      label: labels[index],
+      angle,
+    };
+  });
+  const polygon =
+    points
+      .map((pt, index) => `${index === 0 ? "M" : "L"} ${pt.x} ${pt.y}`)
+      .join(" ") + " Z";
+
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} aria-label="Gráfico radar" role="img">
+      {[0.25, 0.5, 0.75, 1].map((factor) => (
+        <circle
+          key={factor}
+          cx={center}
+          cy={center}
+          r={radius * factor}
+          fill="none"
+          stroke="rgba(255,255,255,0.08)"
+        />
+      ))}
+      <path
+        d={polygon}
+        fill="rgba(77,212,172,0.18)"
+        stroke="var(--vital)"
+        strokeWidth="2"
+      />
+      {points.map((pt, idx) => (
+        <circle
+          key={`dot-${idx}`}
+          cx={pt.x}
+          cy={pt.y}
+          r="4"
+          fill="var(--vital)"
+        />
+      ))}
+      {points.map((pt, index) => {
+        const labelX = center + Math.cos(pt.angle) * (radius + 22);
+        const labelY = center + Math.sin(pt.angle) * (radius + 22);
+        return (
+          <text
+            key={`label-${index}`}
+            x={labelX}
+            y={labelY}
+            textAnchor={
+              Math.abs(Math.cos(pt.angle)) < 0.3
+                ? "middle"
+                : pt.x > center
+                  ? "start"
+                  : "end"
+            }
+            fontSize="10"
+            fill="var(--text-muted)"
+          >
+            {pt.label}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
 
 export default Dashboard;
