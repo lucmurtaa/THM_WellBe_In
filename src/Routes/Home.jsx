@@ -7,12 +7,10 @@ const Home = () => {
     <main>
       <section className="hero container">
         <div className="hero__grid">
-          <div className="hero__copy">
-            <span className="eyebrow hero__eyebrow">FIAP × THM Estatística · Challenge 2025-26</span>
-            <h1>A tecnologia, finalmente, <em className="italic">para o bem</em>.</h1>
+            <span className="eyebrow hero__eyebrow">Challenge: FIAP × THM Estatística</span>
+            <h1>A tecnologia <em className="italic">para o bem</em>.</h1>
             <p className="hero__lead">
-              Wellbe-in transforma sua rotina digital — telas, pausas, sono, sobrecarga mental —
-              em um Score de Equilíbrio claro. Identifica padrões individuais de desgaste
+              Wellbe-in transforma sua rotina digital em um Score de Equilíbrio claro. Identifica padrões individuais de desgaste
               antes que virem sintoma e devolve análises comportamentais personalizadas.
             </p>
             <div className="hero__cta">
@@ -22,34 +20,6 @@ const Home = () => {
               </Link>
               <a href="#video" className="btn btn--ghost">Assistir ao pitch</a>
             </div>
-          </div>
-
-          <div className="hero__visual" aria-hidden="true">
-            <div className="orbit"><div className="orbit__node"></div></div>
-            <div className="orbit orbit--mid"><div className="orbit__node"></div></div>
-            <div className="orbit orbit--inner"><div className="orbit__node"></div></div>
-            <div className="hero__core">
-              <div className="hero__pulse">
-                Equilíbrio<strong>82</strong>de 100
-              </div>
-            </div>
-
-            <div className="hero__floating-card hero__floating-card--1">
-              <div className="fc-icon fc-icon--green">◐</div>
-              <div className="fc-text">
-                <strong>Sono saudável</strong>
-                <span>7.8h · qualidade boa</span>
-              </div>
-            </div>
-
-            <div className="hero__floating-card hero__floating-card--2">
-              <div className="fc-icon fc-icon--amber">⌨</div>
-              <div className="fc-text">
-                <strong>Tela: 7h hoje</strong>
-                <span>Sugestão: pausa real</span>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -57,20 +27,16 @@ const Home = () => {
         <div className="container">
           <div className="stats__grid">
             <div>
-              <div className="stat__num"><span data-count="9.3" data-suffix="h">0</span></div>
+              <div className="stat__num"><span data-count="9" data-suffix="h">9h</span></div>
               <div className="stat__label">tempo médio diário em telas no Brasil</div>
             </div>
             <div>
-              <div className="stat__num"><span data-count="68" data-suffix="%">0</span></div>
+              <div className="stat__num"><span data-count="68" data-suffix="%">68%</span></div>
               <div className="stat__label">relatam fadiga visual frequente</div>
             </div>
             <div>
-              <div className="stat__num"><span data-count="2.3" data-suffix="x">0</span></div>
+              <div className="stat__num"><span data-count="2.3" data-suffix="x">2.3x</span></div>
               <div className="stat__label">risco de insônia com tela antes de dormir</div>
-            </div>
-            <div>
-              <div className="stat__num"><span data-count="5" data-suffix="">0</span></div>
-              <div className="stat__label">cruzamentos comportamentais no MVP</div>
             </div>
           </div>
         </div>
@@ -90,7 +56,7 @@ const Home = () => {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-4" /><path d="M9 11V7a3 3 0 0 1 6 0v4" /></svg>
             </div>
             <h3>Coleta diária leve</h3>
-            <p>Um formulário simples sobre tempo de tela, pausas, sono, sobrecarga, disposição e desconforto físico. Menos de um minuto, sem fadiga de questionário.</p>
+            <p>Um formulário simples e objetivo.</p>
           </div>
 
           <div className="feature">
@@ -99,7 +65,7 @@ const Home = () => {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>
             </div>
             <h3>Score de Equilíbrio</h3>
-            <p>Cinco dimensões — tela, sono, pausas, antes de dormir, sobrecarga — somam um score de 0 a 100. Quanto maior, mais saudável foi seu dia digital.</p>
+            <p>Cinco dimensões classificam o quão saudável foi seu dia digital.</p>
           </div>
 
           <div className="feature">
@@ -108,7 +74,7 @@ const Home = () => {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
             </div>
             <h3>Análise comportamental</h3>
-            <p>Após 7 dias, o sistema compara seus próprios hábitos ao longo do tempo e identifica cruzamentos — como tela × desconforto, sono × disposição, pausas × sobrecarga.</p>
+            <p>Após 7 dias, o sistema transforma seus hábitos em análises personalizadas da sua rotina digital.</p>
           </div>
         </div>
       </section>
@@ -124,12 +90,12 @@ const Home = () => {
           <div className="audience">
             <div className="audience__icon">⌨</div>
             <h4>Programadores</h4>
-            <p>Quem passa o dia depurando código — e termina o dia depurando o próprio cansaço.</p>
+            <p>Quem passa o dia depurando código e termina o dia desgastado.</p>
           </div>
           <div className="audience">
             <div className="audience__icon">🎓</div>
             <h4>Estudantes EAD</h4>
-            <p>Aulas, materiais, provas — tudo no mesmo monitor que também é entretenimento.</p>
+            <p>Aulas, materiais e provas no mesmo monitor usado  entretenimento.</p>
           </div>
           <div className="audience">
             <div className="audience__icon">🏠</div>
@@ -164,14 +130,14 @@ const Home = () => {
 
         <p style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
           Link público: <a href="https://youtu.be/MDea45GRuwk" style={{ color: 'var(--balance)' }}>https://youtu.be/MDea45GRuwk</a>
-          &nbsp;·&nbsp; Substitua pelo link real do vídeo da equipe.
+          &nbsp;·&nbsp;
         </p>
       </section>
 
       <section id="sobre-projeto" className="section container">
         <div className="section-header">
           <span className="eyebrow">Sobre o projeto</span>
-          <h2>Conheça a equipe e a stack.</h2>
+          <h2>Conheça a equipe e a Wellbe-in</h2>
           <p>Wellbe-in é um produto desenvolvido como parte do Challenge FIAP × THM Estatística por estudantes de Engenharia de Software.</p>
         </div>
 

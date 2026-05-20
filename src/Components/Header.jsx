@@ -1,5 +1,6 @@
 import React from 'react'
 import '../global.css'
+import logoWellBein from '../assets/logo-wellbe-in.PNG'
 import { Link } from 'react-router-dom'
 
 
@@ -9,10 +10,10 @@ const Header = () => {
     <nav className="nav">
       <div className="nav__inner">
         <Link to="/" className="nav__logo">
-          <span className="nav__logo-mark"></span>
-          HealthTrack<span>AI</span>
+          <img src={logoWellBein} alt="logo wellbe-in" className='logo-Wellbe-in'/>
         </Link>
-        <button className="nav__toggle" aria-label="Abrir menu">Menu ↓</button>
+        <label className="nav__toggle" aria-label="Abrir menu" htmlFor='toggle__input'>Menu ↓</label>
+        <input id='toggle__input' type="checkbox" hidden className='toggle__input'/>
         <ul className="nav__links">
           <li><Link to="/home">Início</Link></li>
           <li><Link to="/problema">Problema</Link></li>
