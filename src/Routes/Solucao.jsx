@@ -1,6 +1,7 @@
 import React from 'react';
 import { Reveal } from '../components/Reveal';
 import { crossInsights, solutionBands, solutionFlow, solutionPillars } from '../content';
+import { Link } from 'react-router-dom';
 
 export default function SolutionPage() {
   return (
@@ -37,7 +38,7 @@ export default function SolutionPage() {
       <Reveal className="section container" style={{ textAlign: 'center' }}>
         <h2>Pronto para testar a solução?</h2>
         <p style={{ margin: '1rem auto 0' }}>Abra o dashboard e veja o score em tempo real.</p>
-        <div style={{ marginTop: '2rem' }}><a href="/dashboard.html" className="btn btn--primary">Abrir o dashboard<svg className="btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M13 5l7 7-7 7" /></svg></a></div>
+        <div style={{ marginTop: '2rem' }}><Link to="/dashboard" className="btn btn--primary">Abrir dashboard<svg className="btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M13 5l7 7-7 7" /></svg></Link></div>
       </Reveal>
     </main>
   );
