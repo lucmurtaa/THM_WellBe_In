@@ -108,9 +108,6 @@ const Problema = () => {
           </div>
         </section>
       </div>
-
-      
-
     </div>
   )
 }
