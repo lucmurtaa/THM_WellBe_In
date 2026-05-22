@@ -1017,6 +1017,7 @@ function Dashboard() {
 
         <section className="dash-panel">
           <div className={`risk-hero risk-hero--${band}`}>
+            <div className="risk-hero__inner">
             <div>
               <span className="risk-status">{BAND_INFO[band].label}</span>
               <h2>Seu Score de Equilíbrio Digital</h2>
@@ -1040,6 +1041,7 @@ function Dashboard() {
                 <div className="gauge__num">{analysis.score}</div>
                 <div className="gauge__lbl">Equilíbrio / 100</div>
               </div>
+            </div>
             </div>
           </div>
 
@@ -1081,17 +1083,6 @@ function Dashboard() {
                 <TrendChart points={trendData} />
               </div>
             </div>
-            <div className="chart-card">
-              <div className="chart-card__head">
-                <div>
-                  <h3>Análise por dimensão</h3>
-                  <p>Percentual do máximo atual</p>
-                </div>
-              </div>
-              <div className="chart-canvas chart-canvas--small">
-                <RadarChart ratios={radarRatios} />
-              </div>
-            </div>
           </div>
 
           <div className="alerts-section">
@@ -1126,19 +1117,11 @@ function Dashboard() {
             <div className="reco-list">
               {recommendations.map((item, index) => (
                 <div className="reco-item" key={index}>
-                  <span>{index + 1}</span>
+                  <span className="reco-item__num">{index + 1}</span>
                   <p>{item}</p>
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className="disclaimer">
-            <span>i</span>
-            <p>
-              O painel está arquitetado para conexão com backend e gravação de
-              histórico persistente. Não substitui avaliação profissional.
-            </p>
           </div>
         </section>
       </div>
@@ -1196,78 +1179,6 @@ function TrendChart({ points }) {
             fill="var(--text-muted)"
           >
             {point.label}
-          </text>
-        );
-      })}
-    </svg>
-  );
-}
-
-function RadarChart({ ratios }) {
-  const size = 260;
-  const center = size / 2;
-  const radius = 92;
-  const labels = ["Tela", "Antes", "Pausas", "Sono", "Qualidade", "Mental"];
-  const points = ratios.map((ratio, index) => {
-    const angle = (Math.PI * 2 * index) / ratios.length - Math.PI / 2;
-    return {
-      x: center + (Math.cos(angle) * (radius * ratio)) / 100,
-      y: center + (Math.sin(angle) * (radius * ratio)) / 100,
-      label: labels[index],
-      angle,
-    };
-  });
-  const polygon =
-    points
-      .map((pt, index) => `${index === 0 ? "M" : "L"} ${pt.x} ${pt.y}`)
-      .join(" ") + " Z";
-
-  return (
-    <svg viewBox={`0 0 ${size} ${size}`} aria-label="Gráfico radar" role="img">
-      {[0.25, 0.5, 0.75, 1].map((factor) => (
-        <circle
-          key={factor}
-          cx={center}
-          cy={center}
-          r={radius * factor}
-          fill="none"
-          stroke="rgba(255,255,255,0.08)"
-        />
-      ))}
-      <path
-        d={polygon}
-        fill="rgba(77,212,172,0.18)"
-        stroke="var(--vital)"
-        strokeWidth="2"
-      />
-      {points.map((pt, idx) => (
-        <circle
-          key={`dot-${idx}`}
-          cx={pt.x}
-          cy={pt.y}
-          r="4"
-          fill="var(--vital)"
-        />
-      ))}
-      {points.map((pt, index) => {
-        const labelX = center + Math.cos(pt.angle) * (radius + 22);
-        const labelY = center + Math.sin(pt.angle) * (radius + 22);
-        return (
-          <text
-            key={`label-${index}`}
-            x={labelX}
-            y={labelY}
-            textAnchor={
-              Math.abs(Math.cos(pt.angle)) < 0.3
-                ? "middle"
-                : pt.x > center
-                  ? "start"
-                  : "end"
-            }
-            fontSize="10"
-            fill="var(--text-muted)"
-          >
-            {pt.label}
           </text>
         );
       })}

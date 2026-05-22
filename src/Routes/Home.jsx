@@ -86,7 +86,7 @@ const Home = () => {
           <p>O Wellbe-in foi pensado para pessoas com alta exposição diária a telas — aqueles que mais precisam de uma lente para entender o próprio desgaste digital.</p>
         </div>
 
-        <div className="audience-grid">
+        <div className="audience__container">
           <div className="audience">
             <div className="audience__icon">⌨</div>
             <h4>Programadores</h4>

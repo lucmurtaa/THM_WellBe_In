@@ -52,7 +52,7 @@ const Problema = () => {
         <section className="section container">
           <div className="section-header">
             <span className="eyebrow">A lacuna</span>
-            <h2>O paciente moderno gera dados — mas ninguém os lê.</h2>
+            <h2>O paciente moderno gera dados — mas <em className='italic'>ninguém os lê.</em></h2>
             <p>Smartwatches, aplicativos de bem-estar, planilhas pessoais. A informação existe, mas falta uma camada que conecte os pontos e devolva sentido clínico ao usuário.</p>
           </div>
 
