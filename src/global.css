@@ -456,10 +456,10 @@ a {
 /* ============ Layout helpers ============ */
 .container {
   margin: 30px;
-  max-width: var(--max-w);
 }
 
 .section {
+  margin: 0 30px;
   padding: 0;
 }
 
@@ -1035,7 +1035,7 @@ a {
 /* ============ Section headers ============ */
 .section-header {
   margin-bottom: 2rem;
-  max-width: 720px;
+  max-width: 1000px;
   width: 100%;
 }
 
@@ -1046,7 +1046,6 @@ a {
 .section-header p {
   margin-top: 1rem;
   font-size: 1.125rem;
-  max-width: 60ch;
 }
 
 /* ============ Footer ============ */
@@ -1188,7 +1187,9 @@ a {
 /* ============ Page hero (subpages) ============ */
 .page-hero {
   margin: 30px;
-  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .page-hero h1 {
@@ -1199,14 +1200,6 @@ a {
 
 .page-hero p {
   font-size: 1.125rem;
-  max-width: 70ch;
-}
-
-.page-hero {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  width: 100%;
 }
 
 .page-hero h1 {

@@ -1,6 +1,7 @@
 import React from "react";
 import { Reveal } from "../components/Reveal";
 import { phaseCoverage, teamMembers, techStack } from "../content";
+import { Link } from "react-router-dom";
 
 export default function Sobre() {
   return (
@@ -94,7 +95,7 @@ export default function Sobre() {
           Volte para o <em className="italic">início</em>.
         </h2>
         <div style={{ marginTop: "2rem" }}>
-          <a href="/index.html" className="btn btn--ghost">
+          <Link to="/home" className="btn btn--ghost">
             <svg
               className="btn__arrow"
               style={{ transform: "rotate(180deg)" }}
@@ -107,9 +108,9 @@ export default function Sobre() {
               <path d="M5 12h14M13 5l7 7-7 7" />
             </svg>
             Página inicial
-          </a>
-          <a
-            href="/dashboard.html"
+          </Link>
+          <Link
+            to="/dashboard"
             className="btn btn--primary"
             style={{ marginLeft: "0.5rem" }}
           >
@@ -124,7 +125,7 @@ export default function Sobre() {
             >
               <path d="M5 12h14M13 5l7 7-7 7" />
             </svg>
-          </a>
+          </Link>
         </div>
       </Reveal>
     </main>
