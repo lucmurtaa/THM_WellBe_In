@@ -1,26 +1,43 @@
-import React from 'react'
-import '../global.css'
+import React, { useState, useEffect } from 'react'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import logoWellBein from '../assets/logo-wellbe-in.PNG'
-import { Link } from 'react-router-dom'
-
-
+import '../global.css'
 
 const Header = () => {
+  const [open, setOpen] = useState(false)
+  const location = useLocation()
+
+  // Fecha o menu mobile sempre que muda de rota
+  useEffect(() => {
+    setOpen(false)
+  }, [location.pathname])
+
   return (
     <nav className="nav">
       <div className="nav__inner">
         <Link to="/" className="nav__logo">
-          <img src={logoWellBein} alt="logo wellbe-in" className='logo-Wellbe-in'/>
+          <img src={logoWellBein} alt="logo wellbe-in" className="logo-Wellbe-in" />
         </Link>
-        <label className="nav__toggle" aria-label="Abrir menu" htmlFor='toggle__input'>Menu ↓</label>
-        <input id='toggle__input' type="checkbox" hidden className='toggle__input'/>
-        <ul className="nav__links">
-          <li><Link to="/home">Início</Link></li>
-          <li><Link to="/problema">Problema</Link></li>
-          <li><Link to="/solucao">Solução</Link></li>
-          <li><Link to="/dashboard">Painel</Link></li>
-          <li><Link to="/sobre">Sobre</Link></li>
-          <li className="nav__cta"><Link to="/dashboard">Testar agora</Link></li>
+
+        <button
+          className="nav__toggle"
+          aria-label={open ? 'Fechar menu' : 'Abrir menu'}
+          aria-expanded={open}
+          onClick={() => setOpen((prev) => !prev)}
+          type="button"
+        >
+          {open ? 'Fechar ↑' : 'Menu ↓'}
+        </button>
+
+        <ul className={`nav__links${open ? ' open' : ''}`}>
+          <li><NavLink to="/home" className={({ isActive }) => isActive ? 'active' : ''}>Início</NavLink></li>
+          <li><NavLink to="/problema" className={({ isActive }) => isActive ? 'active' : ''}>Problema</NavLink></li>
+          <li><NavLink to="/solucao" className={({ isActive }) => isActive ? 'active' : ''}>Solução</NavLink></li>
+          <li><NavLink to="/dashboard" className={({ isActive }) => isActive ? 'active' : ''}>Dashboard</NavLink></li>
+          <li><NavLink to="/sobre" className={({ isActive }) => isActive ? 'active' : ''}>Sobre</NavLink></li>
+          <li className="nav__cta">
+            <Link to="/dashboard">Testar agora</Link>
+          </li>
         </ul>
       </div>
     </nav>

@@ -472,7 +472,6 @@ const mockDatabase = {
 // Define estado visual das métricas do dashboard.
 // Retorna status como ok, warn ou bad.
 function metricState(type, value) {
-  // Retorna códigos simples compatíveis com as classes CSS: 'ok', 'warn', 'bad'
   if (type === "tela") return value <= 6 ? "ok" : value <= 8 ? "warn" : "bad";
   if (type === "pausas") return value >= 3 ? "ok" : value >= 1 ? "warn" : "bad";
   if (type === "sono") return value >= 18 ? "ok" : value >= 12 ? "warn" : "bad";
@@ -591,48 +590,32 @@ function Dashboard() {
   // Gera recomendações automáticas com base nos hábitos atuais do usuário.
   const recommendations = useMemo(() => {
     const recs = [];
-
     if (analysis.parts.pTela <= 10)
       recs.push(
-        "Alivie os olhos: a cada 20 minutos olhando para a tela, pisque e foque em um ponto distante por 20 segundos.",
+        "Aplique a regra 20-20-20: a cada 20 minutos olhe para algo a 6m por 20s.",
       );
-
     if (analysis.parts.pPausas <= 8)
       recs.push(
-        "Insira pequenas pausas desconectadas ao longo do dia para dar descanso à mente.",
+        "Programe pausas curtas fora da tela a cada bloco de trabalho.",
       );
-
     if (formState.telasAntesDormir === "sim")
-      recs.push(
-        "Desacelere o cérebro: experimente afastar-se das telas 30 minutos antes de se deitar.",
-      );
-
+      recs.push("Crie uma rotina de desaceleração 30 min antes do sono.");
     if (analysis.parts.pSonoHoras < 15 || analysis.parts.pSonoQual < 8)
-      recs.push(
-        "Busque deitar-se em horários consistentes para ajudar a regular seu relógio biológico.",
-      );
-
+      recs.push("Estabeleça horários regulares de sono.");
     if (
       formState.sobrecarga === "limite" ||
       formState.sobrecarga === "esgotado"
     )
-      recs.push(
-        "Seu corpo pede pausa: reserve momentos de silêncio ou respiração profunda durante o dia.",
-      );
-
+      recs.push("Reserve intervalos de recuperação mental durante o dia.");
     if (
       formState.desconforto === "moderado" ||
       formState.desconforto === "intenso"
     )
       recs.push(
-        "Ajuste sua postura e mude de posição a cada 50 minutos para aliviar as tensões acumuladas.",
+        "Reveja sua ergonomia de trabalho e levante-se a cada 50 minutos.",
       );
-
     if (!recs.length)
-      recs.push(
-        "Excelente dia digital! Continue registrando sua rotina para consolidar sua linha de base.",
-      );
-
+      recs.push("Mantenha o registro diário para fortalecer seu histórico.");
     return recs.slice(0, 4);
   }, [analysis.parts, formState]);
 
@@ -643,15 +626,7 @@ function Dashboard() {
       title: "Tempo de tela",
       value: analysis.raw.horasTela.toFixed(1),
       unit: "h",
-      // state: código usado pelo CSS
       state: metricState("tela", analysis.raw.horasTela),
-      // label amigável exibido no card
-      stateLabel:
-        metricState("tela", analysis.raw.horasTela) === "ok"
-          ? "Equilibrado"
-          : metricState("tela", analysis.raw.horasTela) === "warn"
-            ? "Atenção"
-            : "Desgaste",
       fill: Math.min(100, (analysis.raw.horasTela / 12) * 100),
       caption: metricCaption("tela", analysis.raw.horasTela),
     },
@@ -661,12 +636,6 @@ function Dashboard() {
       value: analysis.raw.pausasAnalogicas,
       unit: "pausas",
       state: metricState("pausas", analysis.raw.pausasAnalogicas),
-      stateLabel:
-        metricState("pausas", analysis.raw.pausasAnalogicas) === "ok"
-          ? "Equilibrado"
-          : metricState("pausas", analysis.raw.pausasAnalogicas) === "warn"
-            ? "Atenção"
-            : "Desgaste",
       fill: Math.min(100, (analysis.raw.pausasAnalogicas / 6) * 100),
       caption: metricCaption("pausas", analysis.raw.pausasAnalogicas),
     },
@@ -679,18 +648,6 @@ function Dashboard() {
         "sono",
         analysis.parts.pSonoHoras + analysis.parts.pSonoQual,
       ),
-      stateLabel:
-        metricState(
-          "sono",
-          analysis.parts.pSonoHoras + analysis.parts.pSonoQual,
-        ) === "ok"
-          ? "Equilibrado"
-          : metricState(
-                "sono",
-                analysis.parts.pSonoHoras + analysis.parts.pSonoQual,
-              ) === "warn"
-            ? "Atenção"
-            : "Desgaste",
       fill: ((analysis.parts.pSonoHoras + analysis.parts.pSonoQual) / 25) * 100,
       caption: metricCaption("sono", analysis.raw.horasSono),
     },
@@ -707,12 +664,6 @@ function Dashboard() {
               : "Esgotado",
       unit: "",
       state: metricState("sobrecarga", formState.sobrecarga),
-      stateLabel:
-        metricState("sobrecarga", formState.sobrecarga) === "ok"
-          ? "Equilibrado"
-          : metricState("sobrecarga", formState.sobrecarga) === "warn"
-            ? "Atenção"
-            : "Desgaste",
       fill:
         formState.sobrecarga === "tranquilo"
           ? 100
@@ -765,9 +716,9 @@ function Dashboard() {
         <div>
           <h1>Painel de equilíbrio digital</h1>
           <p>
-            Monitore seus hábitos diários para proteger sua saúde mental e
-            física. Acompanhe seus índices de bem-estar, alertas preventivos e
-            análises comportamentais em um ambiente seguro.
+            Registre sua rotina digital com dados reais. O painel organiza
+            Score, recomendações e sinais comportamentais, preparado para
+            integração com backend.
           </p>
         </div>
         <div className="dash-pill-group">
@@ -778,7 +729,7 @@ function Dashboard() {
             Análises completas: {enoughHistory ? "Sim" : "Não"}
           </span>
           <span className="dash-pill">
-            Última análise:{" "}
+            Último relatório:{" "}
             {latestReport ? formatDateTime(latestReport.reportedAt) : "Nenhum"}
           </span>
         </div>
@@ -788,8 +739,8 @@ function Dashboard() {
         <aside className="form-panel">
           <h2>Registro de hoje</h2>
           <p className="form-panel__sub">
-            Tirar um minuto para observar sua rotina é o primeiro passo para o
-            equilíbrio. Como foi seu dia digital hoje?
+            Dados de rotina são a base para uma análise consistente. Atualize o
+            painel quando precisar.
           </p>
 
           <div className="field">
@@ -1065,31 +1016,29 @@ function Dashboard() {
         </aside>
 
         <section className="dash-panel">
-          <div className="risk-hero" data-band={band}>
-            <div className="risk-hero__inner">
-              <div>
-                <span className="risk-status">{BAND_INFO[band].label}</span>
-                <h2>Seu Score de Equilíbrio Digital</h2>
-                <p>{BAND_INFO[band].desc}</p>
-              </div>
-              <div className="gauge">
-                <svg viewBox="0 0 200 200" aria-hidden="true">
-                  <circle className="gauge__track" cx="100" cy="100" r="84" />
-                  <circle
-                    className="gauge__fill"
-                    cx="100"
-                    cy="100"
-                    r="84"
-                    strokeDasharray={2 * Math.PI * 84}
-                    strokeDashoffset={
-                      2 * Math.PI * 84 * (1 - analysis.score / 100)
-                    }
-                  />
-                </svg>
-                <div className="gauge__value">
-                  <div className="gauge__num">{analysis.score}</div>
-                  <div className="gauge__lbl">Equilíbrio / 100</div>
-                </div>
+          <div className={`risk-hero risk-hero--${band}`}>
+            <div>
+              <span className="risk-status">{BAND_INFO[band].label}</span>
+              <h2>Seu Score de Equilíbrio Digital</h2>
+              <p>{BAND_INFO[band].desc}</p>
+            </div>
+            <div className="gauge">
+              <svg viewBox="0 0 200 200" aria-hidden="true">
+                <circle className="gauge__track" cx="100" cy="100" r="84" />
+                <circle
+                  className="gauge__fill"
+                  cx="100"
+                  cy="100"
+                  r="84"
+                  strokeDasharray={2 * Math.PI * 84}
+                  strokeDashoffset={
+                    2 * Math.PI * 84 * (1 - analysis.score / 100)
+                  }
+                />
+              </svg>
+              <div className="gauge__value">
+                <div className="gauge__num">{analysis.score}</div>
+                <div className="gauge__lbl">Equilíbrio / 100</div>
               </div>
             </div>
           </div>
@@ -1103,7 +1052,7 @@ function Dashboard() {
               >
                 <div className="metric__head">
                   <span className="metric__title">{metric.title}</span>
-                  <span className="metric__state">{metric.stateLabel}</span>
+                  <span className="metric__state">{metric.state}</span>
                 </div>
                 <div className="metric__num">
                   <strong>{metric.value}</strong>
@@ -1124,12 +1073,23 @@ function Dashboard() {
             <div className="chart-card">
               <div className="chart-card__head">
                 <div>
-                  <h3>Evolução semanal</h3>
-                  <p>Índice de equilíbrio dos últimos 7 dias</p>
+                  <h3>Tendência semanal</h3>
+                  <p>Score de equilíbrio dos últimos 7 dias</p>
                 </div>
               </div>
               <div className="chart-canvas">
                 <TrendChart points={trendData} />
+              </div>
+            </div>
+            <div className="chart-card">
+              <div className="chart-card__head">
+                <div>
+                  <h3>Análise por dimensão</h3>
+                  <p>Percentual do máximo atual</p>
+                </div>
+              </div>
+              <div className="chart-canvas chart-canvas--small">
+                <RadarChart ratios={radarRatios} />
               </div>
             </div>
           </div>
@@ -1162,15 +1122,23 @@ function Dashboard() {
           </div>
 
           <div className="recommendations">
-            <h3>Orientações Preventivas</h3>
+            <h3>Recomendações práticas</h3>
             <div className="reco-list">
               {recommendations.map((item, index) => (
                 <div className="reco-item" key={index}>
-                  <span className="reco-item__num">{index + 1}</span>
+                  <span>{index + 1}</span>
                   <p>{item}</p>
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="disclaimer">
+            <span>i</span>
+            <p>
+              O painel está arquitetado para conexão com backend e gravação de
+              histórico persistente. Não substitui avaliação profissional.
+            </p>
           </div>
         </section>
       </div>
@@ -1228,6 +1196,78 @@ function TrendChart({ points }) {
             fill="var(--text-muted)"
           >
             {point.label}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
+function RadarChart({ ratios }) {
+  const size = 260;
+  const center = size / 2;
+  const radius = 92;
+  const labels = ["Tela", "Antes", "Pausas", "Sono", "Qualidade", "Mental"];
+  const points = ratios.map((ratio, index) => {
+    const angle = (Math.PI * 2 * index) / ratios.length - Math.PI / 2;
+    return {
+      x: center + (Math.cos(angle) * (radius * ratio)) / 100,
+      y: center + (Math.sin(angle) * (radius * ratio)) / 100,
+      label: labels[index],
+      angle,
+    };
+  });
+  const polygon =
+    points
+      .map((pt, index) => `${index === 0 ? "M" : "L"} ${pt.x} ${pt.y}`)
+      .join(" ") + " Z";
+
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} aria-label="Gráfico radar" role="img">
+      {[0.25, 0.5, 0.75, 1].map((factor) => (
+        <circle
+          key={factor}
+          cx={center}
+          cy={center}
+          r={radius * factor}
+          fill="none"
+          stroke="rgba(255,255,255,0.08)"
+        />
+      ))}
+      <path
+        d={polygon}
+        fill="rgba(77,212,172,0.18)"
+        stroke="var(--vital)"
+        strokeWidth="2"
+      />
+      {points.map((pt, idx) => (
+        <circle
+          key={`dot-${idx}`}
+          cx={pt.x}
+          cy={pt.y}
+          r="4"
+          fill="var(--vital)"
+        />
+      ))}
+      {points.map((pt, index) => {
+        const labelX = center + Math.cos(pt.angle) * (radius + 22);
+        const labelY = center + Math.sin(pt.angle) * (radius + 22);
+        return (
+          <text
+            key={`label-${index}`}
+            x={labelX}
+            y={labelY}
+            textAnchor={
+              Math.abs(Math.cos(pt.angle)) < 0.3
+                ? "middle"
+                : pt.x > center
+                  ? "start"
+                  : "end"
+            }
+            fontSize="10"
+            fill="var(--text-muted)"
+          >
+            {pt.label}
           </text>
         );
       })}
