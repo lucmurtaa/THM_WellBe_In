@@ -15,8 +15,7 @@ const Home = () => {
           </h1>
           <p className="hero__lead">
             A WellBe-In analisa seus hábitos digitais para antecipar sinais de
-            desgaste e fadiga. Compreenda seus padrões de uso e recupere o
-            controle da sua saúde e bem-estar.
+            desgaste e fadiga. Compreenda seus padrões de uso e compreenda melhor seu equilíbrio e bem-estar digital.
           </p>
           <div className="hero__cta">
             <Link to="/dashboard" className="btn btn--primary">

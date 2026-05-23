@@ -81,7 +81,7 @@ const Problema = () => {
               </div>
               <div>
                 <h4>Falta de contexto</h4>
-                <p>Saber que você passou "7 horas no computador" é apenas um número. Entender que o uso contínuo no fim da noite está destruindo seu sono é um diagnóstico preventivo.</p>
+                <p>Saber que você passou "7 horas no computador" é apenas um número. Entender que o uso contínuo no fim da noite está destruindo seu sono é um alerta preventivo.</p>
               </div>
             </li>
             <li className="impact-item">
