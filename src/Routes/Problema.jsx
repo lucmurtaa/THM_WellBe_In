@@ -6,44 +6,44 @@ const Problema = () => {
     <div>
       <div>
         <section className="page-hero container">
-          <span className="eyebrow">Diagnóstico</span>
-          <h1>A saúde se perde no <em className="italic">silêncio</em> dos dias.</h1>
-          <p>Doenças crônicas raramente surgem do nada. Elas se acumulam em meses de sono ruim, estresse não tratado, sedentarismo e alimentação desregulada, sinais que poderiam ter sido vistos a tempo.</p>
+          <span className="eyebrow">O problema</span>
+          <h1>O desgaste que se acumula no <em className="italic">silêncio</em> da rotina</h1>
+          <p>Sinais de estresse, sono ruim e cansaço mental raramente surgem do nada. Eles acumulam-se em meses de hábitos digitais desregulados, alertas invisíveis que ignoramos todos os dias.</p>
         </section>
 
         <section className="section container">
           <div className="section-header">
-            <span className="eyebrow">Por que isso importa</span>
-            <h2>O custo invisível da prevenção que não acontece.</h2>
-            <p>O Brasil enfrenta um paradoxo: tem um sistema de saúde universal, mas a prevenção primária segue subutilizada.</p>
+            <span className="eyebrow">O impacto real</span>
+            <h2>O custo invisível da falta de prevenção.</h2>
+            <p>Negligenciar pequenos sinais na rotina cobra um preço alto da nossa saúde física e mental. Os dados mostram o risco de agir apenas quando o corpo falha.</p>
           </div>
 
           <div className="ctx-grid">
             <div className="ctx-card">
               <div className="ctx-card__num">74<small>%</small></div>
-              <h3>Não monitoram a saúde</h3>
-              <p>Da população adulta brasileira não acompanha indicadores básicos de saúde como sono, estresse e atividade física no cotidiano. O cuidado é reativo, não preventivo.</p>
+              <h3>da população adulta — Sem monitoramento diário</h3>
+              <p>Não acompanha indicadores básicos de bem-estar, como qualidade do sono e níveis de estresse. O cuidado só acontece após o surgimento de sintomas.</p>
               <div className="ctx-card__src">Pesquisa Vigitel · Ministério da Saúde</div>
             </div>
 
             <div className="ctx-card">
               <div className="ctx-card__num">72<small>%</small></div>
-              <h3>Mortes por doenças crônicas</h3>
-              <p>Das mortes no Brasil são causadas por DCNTs (doenças crônicas não transmissíveis) em sua maioria preveníveis com mudanças de hábito.</p>
+              <h3>das mortes no Brasil — Causadas por doenças crônicas</h3>
+              <p>A grande maioria dos casos de DCNTs (como hipertensão e problemas cardiovasculares) está ligada a hábitos diários que poderiam ser evitados com equilíbrio.</p>
               <div className="ctx-card__src">OMS · Relatório global de DCNTs</div>
             </div>
 
             <div className="ctx-card">
               <div className="ctx-card__num">63<small>%</small></div>
-              <h3>Adultos sedentários</h3>
-              <p>Não atingem o mínimo de 150 minutos semanais de atividade física moderada recomendados pela OMS, aumentando significativamente o risco cardiovascular.</p>
+              <h3>dos adultos brasileiros — Abaixo do mínimo de atividade física</h3>
+              <p>Não atingem os 150 minutos semanais recomendados, agravando o sedentarismo e o cansaço muscular causados pela rotina sentada.</p>
               <div className="ctx-card__src">IBGE · PNS 2019</div>
             </div>
 
             <div className="ctx-card">
               <div className="ctx-card__num">9.3<small>M</small></div>
-              <h3>Brasileiros com depressão</h3>
-              <p>Identificados como diagnóstico clínico — o maior número da América Latina. A maioria não recebe acompanhamento contínuo nem percebe os primeiros sinais.</p>
+              <h3>brasileiros — Diagnosticados com depressão</h3>
+              <p>O maior índice da América Latina. O esgotamento mental e a ansiedade avançam silenciosamente sem que os primeiros sinais sejam percebidos.</p>
               <div className="ctx-card__src">OMS · Relatório de saúde mental</div>
             </div>
           </div>
@@ -62,8 +62,8 @@ const Problema = () => {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
               </div>
               <div>
-                <h4>Detecção tardia</h4>
-                <p>Sintomas como fadiga, insônia e ansiedade são normalizados por meses até virarem diagnóstico. O tempo entre primeiro sinal e atendimento é, em média, superior a 11 meses.</p>
+                <h4>Sintomas normalizados</h4>
+                <p>Fadiga, insônia e ansiedade tecnológica são tratados como normais por meses, até que se transformem em um esgotamento real (burnout).</p>
               </div>
             </li>
             <li className="impact-item">
@@ -71,8 +71,8 @@ const Problema = () => {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 9h6v6H9z" /></svg>
               </div>
               <div>
-                <h4>Dados em silos</h4>
-                <p>Cada app armazena uma fração: sono em um, exercício em outro, humor em um terceiro. Sem visão integrada, padrões clinicamente relevantes ficam invisíveis.</p>
+                <h4>Dados fragmentados</h4>
+                <p>O celular marca o tempo de tela, o relógio mede o sono, a mente sente o cansaço. Sem uma visão integrada, os padrões de desgaste ficam invisíveis.</p>
               </div>
             </li>
             <li className="impact-item">
@@ -80,8 +80,8 @@ const Problema = () => {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2v20M2 12h20" /></svg>
               </div>
               <div>
-                <h4>Falta de tradução clínica</h4>
-                <p>"6h30 de sono" é um número. "Sono crônico abaixo do ideal há 12 dias, com correlação com aumento de estresse" é um insight. Falta a segunda camada.</p>
+                <h4>Falta de contexto</h4>
+                <p>Saber que você passou "7 horas no computador" é apenas um número. Entender que o uso contínuo no fim da noite está destruindo seu sono é um diagnóstico preventivo.</p>
               </div>
             </li>
             <li className="impact-item">
@@ -89,8 +89,8 @@ const Problema = () => {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 12h6M12 9v6" /><circle cx="12" cy="12" r="10" /></svg>
               </div>
               <div>
-                <h4>Sobrecarga do SUS</h4>
-                <p>Consultas que poderiam ser preventivas viram urgências. Cada R$ 1 investido em prevenção primária economiza até R$ 5 em tratamento, segundo a OMS.</p>
+                <h4>Custo do descuido</h4>
+                <p>Agir apenas quando o corpo falha custa caro para a mente e para a saúde. Antecipar o desgaste custa menos e devolve a qualidade de vida.</p>
               </div>
             </li>
           </ul>
@@ -98,7 +98,7 @@ const Problema = () => {
 
         <section className="section container">
           <div className="section-header" style={{textAlign: 'center', margin: '0 auto'}}>
-            <h2>Esse é o problema. <em className="italic">Veja a solução.</em></h2>
+            <h2>Entenda o padrão.<em className="italic"> Mude o hábito.</em></h2>
           </div>
           <div style={{textAlign: 'center', marginTop: '2rem'}}>
             <Link to="/solucao" className="btn btn--primary">
