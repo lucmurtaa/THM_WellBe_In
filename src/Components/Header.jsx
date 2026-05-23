@@ -18,7 +18,7 @@ const Header = () => {
           <li><Link to="/home">Início</Link></li>
           <li><Link to="/problema">Problema</Link></li>
           <li><Link to="/solucao">Solução</Link></li>
-          <li><Link to="/dashboard">Dashboard</Link></li>
+          <li><Link to="/dashboard">Painel</Link></li>
           <li><Link to="/sobre">Sobre</Link></li>
           <li className="nav__cta"><Link to="/dashboard">Testar agora</Link></li>
         </ul>

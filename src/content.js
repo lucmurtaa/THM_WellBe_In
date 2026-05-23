@@ -83,29 +83,29 @@ export const problemImpacts = [
 export const solutionPillars = [
   {
     num: 'PILAR 01',
-    title: 'Coleta de dados',
-    body: 'Formulário diário curto, com sliders e toggles, sobre rotina digital, sono, pausas, estado mental e dados complementares. Menos de um minuto para preencher.',
+    title: 'Percepção Diária',
+    body: 'Formulário rápido com seletores objetivos sobre tempo de tela, qualidade do sono, pausas e cansaço mental. Menos de um minuto.',
     list: ['Horas de tela e uso antes de dormir', 'Pausas analógicas × digitais', 'Horas e qualidade do sono', 'Sobrecarga mental', 'Disposição, atividade física e desconforto']
   },
   {
     num: 'PILAR 02',
-    title: 'Score de Equilíbrio',
-    body: 'Um motor de pontuação interpreta seis dimensões do dia digital e retorna um score de 0 a 100, onde valores maiores significam melhor equilíbrio.',
+    title: 'Índice de Equilíbrio',
+    body: 'Análise que interpreta seis dimensões do seu dia digital, gerando um indicador de estabilidade de 0 a 100.',
     list: ['Tela, sono e pausas', 'Telas antes de dormir', 'Sobrecarga mental', 'Classificação por faixas', 'Desgaste digital = 100 − equilíbrio']
   },
   {
     num: 'PILAR 03',
-    title: 'Análise comportamental',
-    body: 'Depois de 7 dias, o sistema cruza os próprios registros do usuário para encontrar sinais persistentes e relações entre hábitos digitais e bem-estar.',
+    title: 'Análise de Padrões',
+    body: 'Após 7 dias, o sistema cruza seus históricos para identificar sinais persistentes de desgaste e fadiga acumulada.',
     list: ['Tela × desconforto físico', 'Tela antes de dormir × qualidade do sono', 'Sono × disposição', 'Pausas analógicas × sobrecarga', 'Tendência de sobrecarga semanal']
   }
 ];
 
 export const solutionFlow = [
-  { num: '01', icon: '✎', title: 'Preencher', body: 'O usuário registra sua rotina digital em menos de um minuto.' },
-  { num: '02', icon: '∑', title: 'Pontuar', body: 'As respostas passam pelo score de equilíbrio e por faixas semânticas.' },
-  { num: '03', icon: '⇄', title: 'Cruzar', body: 'Os dados do histórico são comparados para revelar padrões de desgaste.' },
-  { num: '04', icon: '↗', title: 'Agir', body: 'O painel devolve recomendações claras e sugeridas para os próximos dias.' }
+  { num: '01', icon: '✎', title: 'Preencher', body: 'Você relata sua rotina digital em menos de um minuto.' },
+  { num: '02', icon: '∑', title: 'Pontuar', body: 'O sistema calcula seu índice de equilíbrio do dia.' },
+  { num: '03', icon: '⇄', title: 'Cruzar', body: 'O histórico é comparado para revelar padrões invisíveis.' },
+  { num: '04', icon: '↗', title: 'Agir', body: 'Seu painel sugere pequenos ajustes preventivos para a rotina.' }
 ];
 
 export const solutionBands = [
