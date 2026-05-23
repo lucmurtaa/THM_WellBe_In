@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useReducer, useState } from "react";
+﻿import { useEffect, useMemo, useReducer, useState } from "react";
 import "./dashboard.css";
 
 // Estado inicial padrão do formulário.
