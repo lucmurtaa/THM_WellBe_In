@@ -1,11 +1,17 @@
-import React from 'react'
 import '../global.css'
 import logoWellBein from '../assets/logo-wellbe-in.PNG'
-import { Link } from 'react-router-dom'
-
-
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const Header = () => {
+  const { user, profile, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await signOut()
+    navigate('/')
+  }
+
   return (
     <nav className="nav">
       <div className="nav__inner">
@@ -18,9 +24,16 @@ const Header = () => {
           <li><Link to="/home">Início</Link></li>
           <li><Link to="/problema">Problema</Link></li>
           <li><Link to="/solucao">Solução</Link></li>
-          <li><Link to="/dashboard">Painel</Link></li>
+          {user && <li><Link to="/dashboard">Painel</Link></li>}
           <li><Link to="/sobre">Sobre</Link></li>
-          <li className="nav__cta"><Link to="/dashboard">Testar agora</Link></li>
+          {user ? (
+            <>
+              <li className="nav__user"><span>{profile?.username || user.email}</span></li>
+              <li className="nav__cta"><button className="nav__logout-btn" onClick={handleLogout}>Sair</button></li>
+            </>
+          ) : (
+            <li className="nav__cta"><Link to="/auth">Entrar</Link></li>
+          )}
         </ul>
       </div>
     </nav>

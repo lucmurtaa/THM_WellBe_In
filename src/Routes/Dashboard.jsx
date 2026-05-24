@@ -1,9 +1,8 @@
-﻿import React, { useEffect, useMemo, useReducer, useState } from "react";
+﻿import { useEffect, useMemo, useReducer, useState } from "react";
+import { useAuth } from '../context/AuthContext'
+import { db } from '../services/db'
 import "./dashboard.css";
 
-// Estado inicial padrão do formulário.
-// Define os valores iniciais dos inputs do dashboard
-// e também serve como base para resetar os campos futuramente.
 const defaultForm = {
   horasTela: 6,
   telasAntesDormir: "nao",
@@ -17,9 +16,6 @@ const defaultForm = {
   desconforto: "nenhum",
 };
 
-// Reducer responsável por controlar todas as alterações do formulário.
-// Centraliza a atualização dos campos em um único fluxo,
-// facilitando manutenção e integração futura com APIs/banco de dados.
 function formReducer(state, action) {
   if (action.type === "SET_FIELD") {
     return { ...state, [action.field]: action.value };
@@ -30,19 +26,45 @@ function formReducer(state, action) {
   return state;
 }
 
-// Gera datas fictícias em formato ISO para criação do histórico mockado.
-// Simula registros antigos do usuário para testes visuais e análises.
-function makeIsoTimestamp(daysAgo, hour, minute = 0) {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
-  date.setDate(date.getDate() - daysAgo);
-  date.setHours(hour, minute, 0, 0);
-  return date.toISOString();
+function mapDbRecord(r) {
+  return {
+    id: r.id,
+    userId: r.perfil_id,
+    reportedAt: r.created_at,
+    dataRegistro: r.data_registro,
+    horasTela: r.horas_tela,
+    telasAntesDormir: r.usou_tela_antes_dormir ? 'sim' : 'nao',
+    pausasAnalogicas: r.pausas_analogicas,
+    pausasDigitais: r.pausas_digitais,
+    horasSono: r.horas_sono,
+    qualidadeSono: r.qualidade_sono,
+    sobrecarga: r.sobrecarga,
+    disposicao: r.disposicao,
+    atividade: r.atividade_fisica,
+    desconforto: r.desconforto_fisico,
+    score: r.score_equilibrio,
+  }
 }
 
-// Função principal de cálculo do Score de Equilíbrio Digital.
-// Recebe os dados do formulário, calcula cada critério individualmente,
-// soma as pontuações e retorna um objeto completo com score e métricas.
+function toDbRecord(perfilId, data) {
+  return {
+    perfil_id: perfilId,
+    data_registro: new Date().toISOString().split('T')[0],
+    horas_tela: data.horasTela,
+    usou_tela_antes_dormir: data.telasAntesDormir === 'sim',
+    pausas_analogicas: data.pausasAnalogicas,
+    pausas_digitais: data.pausasDigitais,
+    horas_sono: data.horasSono,
+    qualidade_sono: data.qualidadeSono,
+    sobrecarga: data.sobrecarga,
+    disposicao: data.disposicao,
+    atividade_fisica: data.atividade,
+    desconforto_fisico: data.desconforto,
+    score_equilibrio: data.score,
+    observacoes: null,
+  }
+}
+
 function scoreBalance(data) {
   let pTela;
   if (data.horasTela <= 4) pTela = 25;
@@ -95,8 +117,6 @@ function scoreBalance(data) {
   };
 }
 
-// Classifica o score final em faixas interpretativas.
-// Utilizado para determinar o estado geral do usuário no dashboard.
 function classifyBand(score) {
   if (score >= 80) return "equilibrada";
   if (score >= 60) return "atencao";
@@ -104,8 +124,6 @@ function classifyBand(score) {
   return "alto";
 }
 
-// Centraliza os textos explicativos de cada faixa de score.
-// Facilita manutenção e futuras alterações de conteúdo.
 const BAND_INFO = {
   equilibrada: {
     label: "Rotina equilibrada",
@@ -125,24 +143,16 @@ const BAND_INFO = {
   },
 };
 
-// Verifica se o usuário possui histórico suficiente
-// para liberar análises comportamentais avançadas.
-// Regra mínima: 7 registros.
 function hasMinimumHistory(history) {
   return history.length >= 7;
 }
 
-// Calcula média numérica de uma lista de valores.
-// Utilizado nos cruzamentos comportamentais do sistema.
 function average(values) {
   return values.length
     ? values.reduce((sum, value) => sum + value, 0) / values.length
     : 0;
 }
 
-// Escalas numéricas utilizadas para transformar estados textuais
-// em valores comparáveis matematicamente.
-// Permitem médias, tendências e cruzamentos.
 const discomfortScale = { nenhum: 0, leve: 1, moderado: 2, intenso: 3 };
 const moodScale = { muitoalta: 4, alta: 3, normal: 2, baixa: 1, muitobaixa: 0 };
 const sleepQualityScale = {
@@ -154,8 +164,6 @@ const sleepQualityScale = {
 };
 const overloadScale = { tranquilo: 0, controle: 1, limite: 2, esgotado: 3 };
 
-// Analisa relação entre excesso de tela e desconforto físico.
-// Gera insight caso o padrão seja recorrente no histórico.
 function insightTelaDesconforto(history) {
   const excess = history.filter((item) => item.horasTela > 8);
   const balanced = history.filter((item) => item.horasTela <= 6);
@@ -178,8 +186,6 @@ function insightTelaDesconforto(history) {
   return null;
 }
 
-// Analisa impacto do uso de telas antes de dormir
-// na qualidade do sono do usuário.
 function insightTelaAntesSono(history) {
   const comTela = history.filter((item) => item.telasAntesDormir === "sim");
   const semTela = history.filter((item) => item.telasAntesDormir === "nao");
@@ -202,8 +208,6 @@ function insightTelaAntesSono(history) {
   return null;
 }
 
-// Relaciona quantidade de sono com nível de disposição diária.
-// Detecta padrões de recuperação física e mental.
 function insightSonoDisposicao(history) {
   const goodSleep = history.filter((item) => item.horasSono >= 7);
   const shortSleep = history.filter((item) => item.horasSono < 6);
@@ -226,8 +230,6 @@ function insightSonoDisposicao(history) {
   return null;
 }
 
-// Analisa se pausas analógicas reduzem a sobrecarga mental.
-// Compara pausas reais vs pausas digitais.
 function insightPausasSobrecarga(history) {
   const analog = history.filter(
     (item) => item.pausasAnalogicas > item.pausasDigitais,
@@ -254,8 +256,6 @@ function insightPausasSobrecarga(history) {
   return null;
 }
 
-// Detecta tendência recente de esgotamento mental.
-// Gera alertas preventivos quando padrões críticos aparecem.
 function insightTendenciaSobrecarga(history) {
   const recent = history.slice(-5);
   const overloaded = recent.filter(
@@ -273,8 +273,6 @@ function insightTendenciaSobrecarga(history) {
   return null;
 }
 
-// Função central das análises comportamentais.
-// Executa todos os cruzamentos inteligentes do sistema.
 function buildBehavioralInsights(history) {
   if (!hasMinimumHistory(history)) return [];
   return [
@@ -286,14 +284,12 @@ function buildBehavioralInsights(history) {
   ].filter(Boolean);
 }
 
-// Organiza o histórico em formato adequado para gráficos.
-// Converte datas e scores em pontos visuais.
 function getTrendPoints(history) {
   return history
     .slice()
     .sort((a, b) => new Date(a.reportedAt) - new Date(b.reportedAt))
     .map((entry) => ({
-      label: new Date(entry.reportedAt).toLocaleDateString("pt-BR", {
+      label: new Date(entry.dataRegistro || entry.reportedAt).toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "2-digit",
       }),
@@ -301,15 +297,6 @@ function getTrendPoints(history) {
     }));
 }
 
-// Converte pontuações internas em porcentagens.
-// Utilizado em gráficos radar e indicadores visuais.
-function getRadarRatios(parts, maxParts) {
-  return Object.keys(parts).map((key) =>
-    Math.round((parts[key] / maxParts[key]) * 100),
-  );
-}
-
-// Formata datas ISO para exibição amigável no dashboard.
 function formatDateTime(isoString) {
   return new Date(isoString).toLocaleString("pt-BR", {
     day: "2-digit",
@@ -319,158 +306,20 @@ function formatDateTime(isoString) {
   });
 }
 
-// Regra de negócio principal do MVP.
-// Permite apenas 1 relatório a cada 16 horas.
-function isReportAllowed(lastReportAt, now = new Date()) {
-  if (!lastReportAt) return true;
-  const last = new Date(lastReportAt);
+function isReportAllowed(lastCreatedAt, now = new Date()) {
+  if (!lastCreatedAt) return true;
+  const last = new Date(lastCreatedAt);
   const elapsed = (now.getTime() - last.getTime()) / (1000 * 60 * 60);
   return elapsed >= 16;
 }
 
-// Calcula quando o próximo relatório poderá ser enviado.
-function nextReportAllowed(lastReportAt) {
-  if (!lastReportAt) return null;
-  const next = new Date(lastReportAt);
+function nextReportAllowed(lastCreatedAt) {
+  if (!lastCreatedAt) return null;
+  const next = new Date(lastCreatedAt);
   next.setHours(next.getHours() + 16);
   return next;
 }
 
-// Cria histórico fictício para demonstração do sistema.
-// Simula dados vindos de um banco de dados real.
-function createMockHistory() {
-  return [
-    {
-      id: "hist_001",
-      userId: "user_001",
-      reportedAt: makeIsoTimestamp(7, 18, 20),
-      horasTela: 5.8,
-      telasAntesDormir: "sim",
-      pausasAnalogicas: 2,
-      pausasDigitais: 3,
-      horasSono: 6,
-      qualidadeSono: "media",
-      sobrecarga: "controle",
-      disposicao: "normal",
-      atividade: "ate30",
-      desconforto: "moderado",
-    },
-    {
-      id: "hist_002",
-      userId: "user_001",
-      reportedAt: makeIsoTimestamp(6, 11, 15),
-      horasTela: 4.3,
-      telasAntesDormir: "nao",
-      pausasAnalogicas: 6,
-      pausasDigitais: 0,
-      horasSono: 8.5,
-      qualidadeSono: "muitoboa",
-      sobrecarga: "tranquilo",
-      disposicao: "muitoalta",
-      atividade: "mais1h",
-      desconforto: "nenhum",
-    },
-    {
-      id: "hist_003",
-      userId: "user_001",
-      reportedAt: makeIsoTimestamp(5, 20, 10),
-      horasTela: 7,
-      telasAntesDormir: "nao",
-      pausasAnalogicas: 3,
-      pausasDigitais: 1,
-      horasSono: 7.2,
-      qualidadeSono: "boa",
-      sobrecarga: "controle",
-      disposicao: "alta",
-      atividade: "mais1h",
-      desconforto: "leve",
-    },
-    {
-      id: "hist_004",
-      userId: "user_001",
-      reportedAt: makeIsoTimestamp(4, 9, 40),
-      horasTela: 9.1,
-      telasAntesDormir: "sim",
-      pausasAnalogicas: 1,
-      pausasDigitais: 2,
-      horasSono: 5.5,
-      qualidadeSono: "ruim",
-      sobrecarga: "limite",
-      disposicao: "baixa",
-      atividade: "ate30",
-      desconforto: "moderado",
-    },
-    {
-      id: "hist_005",
-      userId: "user_001",
-      reportedAt: makeIsoTimestamp(3, 17, 50),
-      horasTela: 6.5,
-      telasAntesDormir: "nao",
-      pausasAnalogicas: 4,
-      pausasDigitais: 2,
-      horasSono: 7.5,
-      qualidadeSono: "boa",
-      sobrecarga: "controle",
-      disposicao: "alta",
-      atividade: "30a60",
-      desconforto: "leve",
-    },
-    {
-      id: "hist_006",
-      userId: "user_001",
-      reportedAt: makeIsoTimestamp(2, 20, 30),
-      horasTela: 8.2,
-      telasAntesDormir: "sim",
-      pausasAnalogicas: 2,
-      pausasDigitais: 3,
-      horasSono: 6,
-      qualidadeSono: "media",
-      sobrecarga: "limite",
-      disposicao: "normal",
-      atividade: "ate30",
-      desconforto: "moderado",
-    },
-    {
-      id: "hist_007",
-      userId: "user_001",
-      reportedAt: makeIsoTimestamp(1, 18, 20),
-      horasTela: 6.5,
-      telasAntesDormir: "nao",
-      pausasAnalogicas: 4,
-      pausasDigitais: 1,
-      horasSono: 7.8,
-      qualidadeSono: "boa",
-      sobrecarga: "controle",
-      disposicao: "alta",
-      atividade: "30a60",
-      desconforto: "leve",
-    },
-  ].map((entry) => ({ ...entry, score: scoreBalance(entry).score }));
-}
-
-// Histórico mockado utilizado temporariamente durante o desenvolvimento.
-const MOCK_HISTORY = createMockHistory();
-
-// Simulação temporária de camada de banco de dados.
-// Estruturada para facilitar futura substituição por API real.
-const mockDatabase = {
-  readHistory: async () => {
-    await new Promise((resolve) => setTimeout(resolve, 120));
-    return [...MOCK_HISTORY].sort(
-      (a, b) => new Date(b.reportedAt) - new Date(a.reportedAt),
-    );
-  },
-  saveReport: async (record) => {
-    await new Promise((resolve) => setTimeout(resolve, 120));
-    MOCK_HISTORY.unshift(record);
-    return [...MOCK_HISTORY].sort(
-      (a, b) => new Date(b.reportedAt) - new Date(a.reportedAt),
-    );
-  },
-};
-
-// Define estado visual das métricas do dashboard.
-// Retorna status como ok, warn ou bad.
 function metricState(type, value) {
   if (type === "tela") return value <= 6 ? "ok" : value <= 8 ? "warn" : "bad";
   if (type === "pausas") return value >= 3 ? "ok" : value >= 1 ? "warn" : "bad";
@@ -484,7 +333,6 @@ function metricState(type, value) {
   return "ok";
 }
 
-// Retorna descrições textuais auxiliares para cada métrica.
 function metricCaption(type, value) {
   if (type === "tela") {
     if (value <= 4) return "Dentro do ideal";
@@ -508,30 +356,26 @@ function metricCaption(type, value) {
   return "";
 }
 
-// Componente principal do dashboard.
-// Centraliza estados, análises, histórico,
-// regras de negócio e renderização da interface.
 function Dashboard() {
+  const { profile } = useAuth()
   const [history, setHistory] = useState([]);
   const [formState, dispatch] = useReducer(formReducer, defaultForm);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState({ type: "idle", text: "" });
 
-  // Carrega o histórico inicial da aplicação.
-  // Simula leitura assíncrona de banco de dados.
   useEffect(() => {
+    if (!profile) return
     let mounted = true;
-    mockDatabase.readHistory().then((records) => {
+    db.getHistory(profile.id).then(({ data, error }) => {
       if (!mounted) return;
-      setHistory(records);
+      if (!error && data) {
+        setHistory(data.map(mapDbRecord));
+      }
       setLoading(false);
     });
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    return () => { mounted = false };
+  }, [profile]);
 
-  // Mantém o histórico sempre ordenado do mais recente para o mais antigo.
   const sortedHistory = useMemo(
     () =>
       [...history].sort(
@@ -540,54 +384,37 @@ function Dashboard() {
     [history],
   );
 
-  // Recupera o relatório mais recente do usuário.
   const latestReport = sortedHistory[0] ?? null;
 
-  // Verifica se um novo relatório pode ser enviado,
-  // aplicando a regra das 16 horas.
   const reportAllowed = useMemo(
     () => isReportAllowed(latestReport?.reportedAt),
     [latestReport],
   );
 
-  // Calcula quando o próximo relatório será liberado.
   const nextAllowedAt = useMemo(
     () => (latestReport ? nextReportAllowed(latestReport.reportedAt) : null),
     [latestReport],
   );
 
-  // Executa análise completa do formulário atual em tempo real.
   const analysis = useMemo(() => scoreBalance(formState), [formState]);
 
-  // Determina classificação textual do score atual.
   const band = useMemo(() => classifyBand(analysis.score), [analysis.score]);
 
-  // Verifica se já existem dados suficientes
-  // para liberar análises comportamentais avançadas.
   const enoughHistory = useMemo(
     () => hasMinimumHistory(sortedHistory),
     [sortedHistory],
   );
 
-  // Prepara dados históricos para gráficos de tendência.
   const trendData = useMemo(
     () => getTrendPoints(sortedHistory),
     [sortedHistory],
   );
 
-  // Gera porcentagens utilizadas em gráficos radar.
-  const radarRatios = useMemo(
-    () => getRadarRatios(analysis.parts, analysis.maxParts),
-    [analysis.parts, analysis.maxParts],
-  );
-
-  // Executa os cruzamentos comportamentais personalizados.
   const behavioralInsights = useMemo(
     () => buildBehavioralInsights(sortedHistory),
     [sortedHistory],
   );
 
-  // Gera recomendações automáticas com base nos hábitos atuais do usuário.
   const recommendations = useMemo(() => {
     const recs = [];
     if (analysis.parts.pTela <= 10)
@@ -619,7 +446,6 @@ function Dashboard() {
     return recs.slice(0, 4);
   }, [analysis.parts, formState]);
 
-  // Estrutura os cards principais de métricas do dashboard.
   const metricCards = [
     {
       key: "tela",
@@ -676,9 +502,9 @@ function Dashboard() {
     },
   ];
 
-  // Responsável por registrar um novo relatório.
-  // Aplica validações, calcula score e atualiza histórico.
   const submitReport = async () => {
+    if (!profile) return
+
     if (!reportAllowed) {
       setStatus({
         type: "error",
@@ -688,20 +514,31 @@ function Dashboard() {
     }
 
     const record = {
-      id: `report_${Date.now()}`,
-      userId: "user_001",
-      reportedAt: new Date().toISOString(),
       ...formState,
+      score: scoreBalance(formState).score,
     };
-    record.score = scoreBalance(record).score;
 
     setStatus({ type: "pending", text: "Registrando relatório..." });
-    const updated = await mockDatabase.saveReport(record);
-    setHistory(updated);
+    const { error } = await db.upsertRecord(toDbRecord(profile.id, record))
+    if (error) {
+      setStatus({ type: "error", text: "Erro ao salvar. Tente novamente." });
+      return
+    }
+    const { data: freshData } = await db.getHistory(profile.id)
+    if (freshData) {
+      setHistory(freshData.map(mapDbRecord));
+    }
     setStatus({ type: "success", text: "Relatório registrado com sucesso." });
   };
 
-  // Estado visual exibido enquanto os dados são carregados.
+  if (!profile) {
+    return (
+      <main className="dashboard-shell">
+        <div className="loading-state">Carregando perfil...</div>
+      </main>
+    )
+  }
+
   if (loading) {
     return (
       <main className="dashboard-shell">
@@ -717,8 +554,7 @@ function Dashboard() {
           <h1>Painel de equilíbrio digital</h1>
           <p>
             Registre sua rotina digital com dados reais. O painel organiza
-            Score, recomendações e sinais comportamentais, preparado para
-            integração com backend.
+            Score, recomendações e sinais comportamentais.
           </p>
         </div>
         <div className="dash-pill-group">
@@ -1004,7 +840,7 @@ function Dashboard() {
 
           {status.type !== "idle" && (
             <div
-              className={`alert ${status.type === "error" ? "alert--bad" : status.type === "pending" ? "alert--info" : "alert--warn"}`}
+              className={`alert form-status ${status.type === "error" ? "alert--bad" : status.type === "pending" ? "alert--info" : "alert--warn"}`}
             >
               <div className="alert__icon">i</div>
               <div className="alert__body">
@@ -1132,7 +968,7 @@ function Dashboard() {
 function TrendChart({ points }) {
   const width = 520;
   const height = 220;
-  const padding = 24;
+  const padding = 30;
   const maxScore = 100;
   const step =
     points.length > 1 ? (width - padding * 2) / (points.length - 1) : 0;

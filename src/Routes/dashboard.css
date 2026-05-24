@@ -46,6 +46,12 @@
   letter-spacing: 0.05em;
 }
 
+.dash-pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 .dash-pill__dot {
   width: 6px;
   height: 6px;
@@ -635,6 +641,11 @@ input[type="number"]:focus {
   100% {
     opacity: 1
   }
+}
+
+/* Status alert spacing */
+.form-panel .form-status {
+  margin-top: 1rem;
 }
 
 /* end */

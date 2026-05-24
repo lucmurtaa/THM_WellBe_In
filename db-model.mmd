@@ -1,0 +1,43 @@
+erDiagram
+    perfis {
+        uuid id PK
+        uuid auth_user_id UK "REFERENCES auth.users(id)"
+        varchar nome
+        varchar username UK
+        varchar avatar_url "nullable"
+        varchar timezone "default America/Sao_Paulo"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    registros_diarios {
+        uuid id PK
+        uuid perfil_id FK
+        date data_registro "UK com perfil_id"
+        decimal horas_tela "CHECK 0-24"
+        boolean usou_tela_antes_dormir
+        integer pausas_analogicas "CHECK >= 0"
+        integer pausas_digitais "CHECK >= 0"
+        decimal horas_sono "CHECK 0-24"
+        varchar qualidade_sono "muitoboa|boa|media|ruim|muitoruim"
+        varchar sobrecarga "tranquilo|controle|limite|esgotado"
+        varchar disposicao "muitoalta|alta|normal|baixa|muitobaixa"
+        varchar atividade_fisica "mais1h|30a60|ate30|nenhuma"
+        varchar desconforto_fisico "nenhum|leve|moderado|intenso"
+        integer score_equilibrio "CHECK 0-100"
+        integer score_desgaste "GERADO: 100 - score_equilibrio"
+        text observacoes "nullable"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    insights_gerados {
+        uuid id PK
+        uuid perfil_id FK
+        uuid registro_diario_id FK "nullable, ON DELETE SET NULL"
+        varchar tipo_insight
+        text mensagem
+        integer relevancia "CHECK 1-5, nullable"
+        timestamptz created_at
+    }
+    perfis ||--o{ registros_diarios : possui
+    perfis ||--o{ insights_gerados : recebe
+    registros_diarios ||--o{ insights_gerados : gera

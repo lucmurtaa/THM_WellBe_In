@@ -1,5 +1,5 @@
 import React from 'react';
-import { Reveal } from '../components/Reveal';
+import { Reveal } from '../Components/Reveal';
 import { crossInsights, solutionBands, solutionFlow, solutionPillars } from '../content';
 import { Link } from 'react-router-dom';
 

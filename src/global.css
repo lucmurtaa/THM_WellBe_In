@@ -51,6 +51,7 @@
   position: relative;
   height: 280px;
   width: 100%;
+  overflow: hidden;
 }
 
 .chart-canvas--small {
@@ -583,6 +584,38 @@ a {
 .nav__links .nav__cta a.active::before {
   display: none;
   /* CTA doesn't need the dot indicator */
+}
+
+/* Navbar logout button (same style as CTA) */
+.nav__links .nav__cta .nav__logout-btn {
+  background: var(--vital);
+  color: var(--bg-base);
+  padding: 0.5rem 1rem;
+  margin-left: 0.5rem;
+  font-weight: 500;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  transition: all 0.25s var(--ease);
+  box-shadow: 0 4px 14px -4px var(--vital-glow);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.nav__links .nav__cta .nav__logout-btn:hover {
+  background: var(--text-primary);
+  color: var(--bg-base);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -4px var(--vital-glow);
+}
+
+/* Navbar user display */
+.nav__user span {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
 }
 
 .nav__links a.active::before {
@@ -2145,6 +2178,7 @@ select {
   position: relative;
   height: 280px;
   width: 100%;
+  overflow: hidden;
 }
 
 .chart-canvas--small {
