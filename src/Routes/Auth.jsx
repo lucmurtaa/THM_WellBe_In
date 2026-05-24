@@ -78,8 +78,6 @@ export default function Auth() {
         setError('Email ou senha incorretos.')
       } else if (err.message?.includes('already registered')) {
         setError('Este email já está cadastrado.')
-      } else if (err.message?.includes('already exists')) {
-        setError('Este username já está em uso.')
       } else {
         setError(err.message || 'Erro inesperado. Tente novamente.')
       }
