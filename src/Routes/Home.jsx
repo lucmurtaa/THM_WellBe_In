@@ -10,11 +10,12 @@ const Home = () => {
             <span className="eyebrow hero__eyebrow">Challenge: FIAP × THM Estatística</span>
             <h1>A tecnologia <em className="italic">para o bem</em>.</h1>
             <p className="hero__lead">
-              A WellBe-In analisa seus hábitos digitais para antecipar sinais de desgaste e fadiga. Compreenda seus padrões de uso e recupere o controle da sua saúde e bem-estar.
+              Wellbe-in transforma sua rotina digital em um Score de Equilíbrio claro. Identifica padrões individuais de desgaste
+              antes que virem sintoma e devolve análises comportamentais personalizadas.
             </p>
             <div className="hero__cta">
               <Link to="/dashboard" className="btn btn--primary">
-                Ver meu painel
+                Abrir o dashboard
                 <svg className="btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
               </Link>
               <a href="#video" className="btn btn--ghost">Assistir ao pitch</a>
@@ -44,8 +45,8 @@ const Home = () => {
       <section className="section container">
         <div className="section-header">
           <span className="eyebrow">Como funciona</span>
-          <h2>Três etapas. Uma rotina digital mais saudável.</h2>
-          <p>A WellBe-In não realiza diagnósticos clínicos. Ela monitora, organiza e devolve a consciência sobre os seus próprios hábitos digitais.</p>
+          <h2>Três etapas. Uma rotina mais saudável.</h2>
+          <p>O Wellbe-in não diagnostica. Ele observa, organiza e devolve sentido aos seus próprios hábitos digitais.</p>
         </div>
 
         <div className="features">
@@ -63,8 +64,8 @@ const Home = () => {
             <div className="feature__icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>
             </div>
-            <h3>Índice de Bem-Estar</h3>
-            <p>Cinco dimensões comportamentais avaliam o equilíbrio da sua rotina digital.</p>
+            <h3>Score de Equilíbrio</h3>
+            <p>Cinco dimensões classificam o quão saudável foi seu dia digital.</p>
           </div>
 
           <div className="feature">
@@ -73,7 +74,7 @@ const Home = () => {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
             </div>
             <h3>Análise comportamental</h3>
-            <p>Após 7 dias, o sistema mapeia seus padrões e gera orientações personalizadas para prevenir o desgaste.</p>
+            <p>Após 7 dias, o sistema transforma seus hábitos em análises personalizadas da sua rotina digital.</p>
           </div>
         </div>
       </section>
@@ -85,26 +86,26 @@ const Home = () => {
           <p>O Wellbe-in foi pensado para pessoas com alta exposição diária a telas — aqueles que mais precisam de uma lente para entender o próprio desgaste digital.</p>
         </div>
 
-        <div className="audience__container">
+        <div className="audience-grid">
           <div className="audience">
             <div className="audience__icon">⌨</div>
             <h4>Programadores</h4>
-            <p>Horas seguidas de código que exigem atenção à fadiga mental e visual ao fim do dia.</p>
+            <p>Quem passa o dia depurando código e termina o dia desgastado.</p>
           </div>
           <div className="audience">
             <div className="audience__icon">🎓</div>
             <h4>Estudantes EAD</h4>
-            <p>Aulas, leituras e lazer concentrados na mesma tela, sem separação de ambiente.</p>
+            <p>Aulas, materiais e provas no mesmo monitor usado para entretenimento.</p>
           </div>
           <div className="audience">
             <div className="audience__icon">🏠</div>
             <h4>Home office</h4>
-            <p>Profissionais que precisam estabelecer limites claros entre o trabalho e o descanso.</p>
+            <p>Sem deslocamento físico, sem fronteiras claras entre trabalho e descanso.</p>
           </div>
           <div className="audience">
             <div className="audience__icon">🎮</div>
             <h4>Gamers</h4>
-            <p>Sessões longas de foco que demandam recuperação consciente do sono e pausas.</p>
+            <p>Sessões longas exigem recuperação consciente — sono, pausas e movimento.</p>
           </div>
         </div>
       </section>

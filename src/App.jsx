@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom"
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './Components/ProtectedRoute'
 import Header from "./Components/Header.jsx"
@@ -13,15 +13,19 @@ import Solucao from "./Routes/Solucao.jsx"
 import Dashboard from "./Routes/Dashboard.jsx"
 import Sobre from "./Routes/Sobre.jsx"
 
-export default function App() {
+function ScrollToTop() {
+  const { pathname } = useLocation()
   useEffect(() => {
-    const els = document.querySelectorAll('.reveal')
-    els.forEach(el => el.classList.add('in-view'))
-  }, [])
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
 
+export default function App() {
   return (
     <AuthProvider>
       <Router>
+        <ScrollToTop />
         <div>
           <Header />
           <Routes>
